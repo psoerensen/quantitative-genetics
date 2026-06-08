@@ -1,0 +1,27 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - slides/introduction_quantitative_genetics.qmd
+    - slides/introduction_quantitative_genetics_narrated.qmd
+  resources:
+    - images/**
+    - narration/**
+
+website:
+  title: "Quantitative Genetics"
+  navbar:
+    left:
+      - text: "Home"
+        href: index.html
+      - text: "Slides"
+        href: slides/introduction_quantitative_genetics.html
+      - text: "Narrated slides"
+        href: slides/introduction_quantitative_genetics_narrated.html
+      - text: "qgteach"
+        href: https://psoerensen.github.io/qgteach/
+
+format:
+  html:
+    theme: flatly

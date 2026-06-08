@@ -1,0 +1,36 @@
+---
+title: "Quantitative Genetics"
+subtitle: "Foundations of Quantitative Trait Analysis"
+---
+
+## Course Overview
+
+This course introduces the mathematical, statistical, and biological foundations used to study quantitative traits. It connects genetic and environmental sources of phenotypic variation with heritability, response to selection, and the genetic architecture of complex traits.
+
+## Learning Objectives
+
+After completing the course, students should be able to:
+
+- Describe quantitative variation using means, variances, and distributions.
+- Explain how genetic and environmental effects contribute to phenotypic variation.
+- Distinguish additive, dominance, and environmental variance components.
+- Calculate and interpret broad-sense and narrow-sense heritability.
+- Explain response to selection and the breeder's equation.
+- Relate quantitative-genetics concepts to complex-trait analysis and breeding.
+
+## Prerequisites
+
+- Basic genetics and Mendelian inheritance
+- Introductory statistics
+- Basic familiarity with R
+
+## Course Materials
+
+- [Quantitative Genetics slides](slides/introduction_quantitative_genetics.html)
+- [Narrated Quantitative Genetics slides](slides/introduction_quantitative_genetics_narrated.html)
+
+Additional teaching materials will be added to the standard course folders as they are developed.
+
+## Course Hub
+
+Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).
