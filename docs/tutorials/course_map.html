@@ -254,7 +254,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="population-genetics-sequence" class="level2">
 <h2 class="anchored" data-anchor-id="population-genetics-sequence">Population-genetics sequence</h2>
-<p>These seven practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.</p>
+<p>These eight practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -298,6 +298,11 @@ ul.task-list li input[type="checkbox"] {
 <td><a href="https://psoerensen.github.io/population-genetics/tutorials/selection_fitness.html">PG 7: Selection, fitness and dominance</a></td>
 <td>How do genotype fitness and sampling change allele trajectories?</td>
 <td>PG 2 and PG 6</td>
+</tr>
+<tr class="even">
+<td><a href="https://psoerensen.github.io/population-genetics/tutorials/testing_hwe.html">PG 8: Testing HWE proportions</a></td>
+<td>What do approximate and exact tests establish?</td>
+<td>PG 2–3; sampling and hypothesis testing</td>
 </tr>
 </tbody>
 </table>
@@ -395,8 +400,8 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td>Genotype data, allele frequencies and HWE expectations</td>
-<td>PG 1–2; worked counts and expectations, without a formal HWE test</td>
+<td>Genotype data, allele frequencies and HWE</td>
+<td>PG 1–2 cover coding and expectations; PG 8 covers fitted chi-square and exact conditional tests</td>
 </tr>
 <tr class="even">
 <td>Mating, population structure and identity by descent</td>
@@ -440,11 +445,6 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html#hardyweinberg-test-theory-and-example">HWE testing</a></td>
-<td>PG 2 computes model expectations and sampling examples, but does not run a formal test</td>
-<td>Compare fitted expectations, degrees of freedom and small-count limitations; explain what rejection can and cannot identify</td>
-</tr>
-<tr class="even">
 <td><a href="../slides/introduction_quantitative_genetics.html#genome-wide-association-study-gwas">GWAS</a> and <a href="../slides/introduction_quantitative_genetics.html#why-gwas-works-markerqtl-linkage-disequilibrium">marker–QTL LD</a></td>
 <td>QG 2 studies one marker’s effects; it does not qualify causal interpretation or genome-wide significance</td>
 <td>A small association analysis with covariates, multiple testing and an explicit distinction between association and causation</td>
@@ -453,6 +453,7 @@ ul.task-list li input[type="checkbox"] {
 </table>
 <p>For additional applications, the population-genetics slides discuss conservation, medicine, forensics and the molecular clock. PG 1–7 supply foundations for those topics, but do not provide dedicated applied practicals. Mutation–drift and mutation–selection balance also need their own worked synthesis if included in assessment.</p>
 <p>The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.</p>
+<p>PG 8 now supplies formal HWE inference. Teach it after PG 2–3 when the aim includes hypothesis testing, keeping observed departures separate from explanations of their cause.</p>
 </section>
 </section>
 <section id="suggested-teaching-routes" class="level2">
@@ -493,7 +494,7 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td>PG 1–7</td>
+<td>PG 1–8</td>
 <td>Base R; hypothetical data; no required downloads</td>
 </tr>
 <tr class="even">
