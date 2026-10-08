@@ -1,0 +1,181 @@
+---
+title: "Predicting pedigree breeding values"
+subtitle: "Practical 4: BLUP, shrinkage and prediction uncertainty"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Distinguish breeding values from phenotypes and fixed group effects; calculate BLUP under a pedigree model; explain shrinkage and information from relatives; and distinguish prediction reliability from observed prediction accuracy.
+
+Continue from [Practical 3](mouse_genetic_parameters.qmd). You need base R, `qgg` and the [shared helper script](../scripts/mouse_practical_helpers.R). This practical uses the same mouse data and founder base. Data checks and preparation are repeated so the page runs independently.
+
+## 1. Fit the pedigree model
+
+```{r}
+#| label: prepare-blup
+source("../scripts/mouse_practical_helpers.R")
+data <- mouse_pedigree_data()
+mouse <- data$mouse
+ids <- data$ids
+A <- mouse_relationship(data$pedigree)
+K <- A[ids, ids, drop=FALSE]
+X <- model.matrix(~sex+reps, data=mouse)
+y <- mouse$BW
+names(y) <- ids
+fitA <- mouse_fit(y, X, K, "A")
+fitA$theta
+fitA$niter
+VA <- unname(fitA$theta["A"])
+VE <- unname(fitA$theta["E"])
+```
+
+The model is $y=Xb+u+e$, with $\operatorname{Var}(u)=A\sigma_A^2$ and independent residual variance $I\sigma_E^2$. Estimated variance components give **empirical BLUP**: prediction conditional on the fitted components. Shared-litter/maternal effects are absent from this model, so model adequacy matters.
+
+## 2. Separate the parts of a phenotype prediction
+
+The fitted prediction is $\hat y_i=x_i^T\hat b+\hat u_i$. The fixed part describes sex and replicate contrasts; $\hat u_i$ is the predicted additive genetic deviation relative to the pedigree base. Residuals are $y_i-\hat y_i$.
+
+```{r}
+#| label: prediction-table
+u_hat <- drop(fitA$g[,"A"])
+predictions <- data.frame(id=ids, phenotype=y,
+                          fixed_part=drop(X %*% fitA$b),
+                          breeding_value=u_hat,
+                          predicted_phenotype=drop(fitA$predicted),
+                          residual=drop(fitA$e), row.names=NULL)
+stopifnot(max(abs(predictions$predicted_phenotype-
+                  predictions$fixed_part-u_hat)) < 1e-8,
+          max(abs(y-predictions$predicted_phenotype-predictions$residual)) < 1e-8)
+knitr::kable(head(predictions), digits=3)
+```
+
+**Question 1.** Why can two mice with similar body weights receive different breeding-value predictions?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Their sex/replicate adjustments and relatives' records may differ. Phenotype ranking mixes group means, additive effects and residual sources. BLUP combines adjusted records using the relationship and variance model. A higher prediction concerns the defined trait and base; it does not automatically imply a better multivariate breeding objective.
+:::
+
+## 3. Calculate BLUP directly
+
+For $V=A\sigma_A^2+I\sigma_E^2$,
+
+$$\hat b=(X^TV^{-1}X)^{-1}X^TV^{-1}y,\qquad
+\hat u=\sigma_A^2 A V^{-1}(y-X\hat b).$$
+
+The following base-R calculation verifies the package prediction at its fitted variance components.
+
+```{r}
+#| label: direct-blup
+V <- VA*K + diag(VE, length(y))
+Vi <- chol2inv(chol(V))
+ViX <- Vi %*% X
+Cb <- solve(crossprod(X, ViX))
+b_direct <- Cb %*% crossprod(X, Vi %*% y)
+u_direct <- drop(VA*K %*% Vi %*% (y-X %*% b_direct))
+stopifnot(max(abs(u_direct-u_hat)) < 1e-7,
+          max(abs(b_direct-fitA$b)) < 1e-7)
+```
+
+**Question 2.** What happens when residual variance is large relative to additive variance?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+A record carries less information about its underlying breeding value. Predictions generally shrink more toward the model's reference expectation. The amount depends on the whole information structure, not only one phenotype.
+:::
+
+### An own-record illustration
+
+For one noninbred, unrelated individual with known fixed mean, $u\sim N(0,\sigma_A^2)$ and $e\sim N(0,\sigma_E^2)$. Its prediction from an adjusted phenotype $y^*$ is $\hat u=h^2y^*$, with $h^2=\sigma_A^2/(\sigma_A^2+\sigma_E^2)$. This scalar illustration does not replace the mouse pedigree analysis.
+
+```{r}
+#| label: fig-shrinkage
+#| fig-cap: "Own-record shrinkage at different assumed heritabilities; the group mean is known in this illustration."
+adjusted_record <- seq(-10,10,length.out=101)
+plot(adjusted_record, 0.2*adjusted_record, type="l", ylim=c(-10,10),
+     xlab="Adjusted phenotype", ylab="Predicted breeding value",
+     col="#247BA0", lwd=2)
+lines(adjusted_record, 0.8*adjusted_record, col="#B65C39", lwd=2)
+abline(0,1,lty=2)
+legend("topleft", c("h²=0.2", "h²=0.8", "Unshrunk record"),
+       col=c("#247BA0","#B65C39","black"), lty=c(1,1,2), bty="n")
+stopifnot(0.2*5==1, 0.8*5==4)
+```
+
+## 4. Explore pedigree predictions
+
+```{r}
+#| label: fig-pedigree-predictions
+#| fig-cap: "Predicted breeding values and model residuals for recorded mice. Association with input phenotypes is not validation accuracy."
+#| fig-width: 9
+#| fig-height: 5
+local({
+  old <- par(mfrow=c(1,2)); on.exit(par(old))
+  plot(y, u_hat, pch=16, cex=0.5, col="#247BA0",
+       xlab="Observed body weight", ylab="Pedigree breeding value")
+  hist(drop(fitA$e), breaks=25, col="#86B7A3", border="white",
+       xlab="Model residual", main="Residual distribution")
+})
+```
+
+A residual histogram can identify patterns worth investigating; it cannot prove independence or eliminate omitted family effects. Correlation with a phenotype already used for fitting is an in-sample association, not evidence of predictive accuracy.
+
+## 5. Quantify model-based uncertainty
+
+With unknown fixed effects accounted for, define
+
+$$P=V^{-1}-V^{-1}X(X^TV^{-1}X)^{-1}X^TV^{-1}.$$
+
+The prediction-error covariance at supplied variance components is
+
+$$C_u=\sigma_A^2 A-\sigma_A^4 APA.$$
+
+Its diagonal contains prediction-error variances (PEV). A model-based reliability is $1-PEV_i/(A_{ii}\sigma_A^2)$; its square root is often called model-based accuracy. These plug-in quantities ignore uncertainty in the estimated variance components and do not provide empirical validation against true breeding values.
+
+```{r}
+#| label: prediction-reliability
+P <- Vi - ViX %*% Cb %*% t(ViX)
+# Compute the diagonal without storing another full covariance matrix.
+pev <- VA*diag(K) - VA^2*rowSums((K %*% P)*K)
+reliability <- 1-pev/(VA*diag(K))
+stopifnot(all(pev >= -1e-8), all(reliability >= -1e-8),
+          all(reliability <= 1+1e-8))
+summary(reliability)
+predictions$reliability <- reliability
+knitr::kable(head(predictions[order(-predictions$breeding_value),
+                               c("id","breeding_value","reliability")]),digits=3)
+# Independent scalar check: own record, known mean, VA=2, VE=3.
+scalar_pev <- 2-2^2/(2+3)
+stopifnot(abs(1-scalar_pev/2 - 2/(2+3)) < 1e-12)
+```
+
+**Question 3.** Does the highest breeding-value prediction necessarily have the greatest reliability?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. Predicted merit and precision answer different questions. Reliability depends on information, relationships and variance assumptions. True breeding values are unavailable for these mice; their empirical prediction accuracy cannot be read from this table.
+:::
+
+## Exercises
+
+1. Compare ranking by phenotype and by predicted breeding value. How do group adjustments affect interpretation?
+2. Identify a mouse with relatively low reliability. Describe what additional information might help.
+3. Explain why retaining only the largest predicted values does not evaluate response to selection.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+head(predictions[order(-predictions$phenotype),c("id","phenotype","breeding_value")])
+head(predictions[order(predictions$reliability),c("id","breeding_value","reliability")])
+```
+More informative own/relative records can improve precision under an appropriate model. Selection response also depends on mating, inheritance, the objective and the next generation's environment. `gsel` owns decision policies and `gsim` biological simulation; neither fits this pedigree evaluation.
+:::
+
+## Next practical
+
+[Practical 5](mouse_genomic_breeding_values.qmd) replaces pedigree expectations with a genomic relationship model and separates agreement between predictions from validation on held-out records.

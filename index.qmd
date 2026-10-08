@@ -33,6 +33,10 @@ After completing the course, students should be able to:
 
 - [Practical 2: From genotype effects to quantitative variation](tutorials/mouse_single_locus.qmd) — allele frequencies, genotype contrasts and single-locus variance.
 
+- [Practical 3: Estimating genetic parameters](tutorials/mouse_genetic_parameters.qmd) — pedigree relationships, REML and heritability.
+- [Practical 4: Predicting pedigree breeding values](tutorials/mouse_pedigree_breeding_values.qmd) — BLUP, shrinkage and reliability.
+- [Practical 5: Predicting genomic breeding values](tutorials/mouse_genomic_breeding_values.qmd) — genomic relationships and held-out phenotype prediction.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).

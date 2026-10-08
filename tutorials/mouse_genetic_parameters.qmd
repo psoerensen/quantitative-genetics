@@ -1,0 +1,160 @@
+---
+title: "Estimating genetic parameters"
+subtitle: "Practical 3: Pedigree relationships, variance components and heritability"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Construct and interpret additive pedigree relationships; align records by identity; fit a linear mixed model; and distinguish a model-based heritability estimate from a raw phenotype variance ratio.
+
+Continue from [Practical 2](mouse_single_locus.qmd). Read alongside [variance partitioning](../slides/introduction_quantitative_genetics.qmd#from-phenotype-to-variance). You need base R and the `qgg` package (`install.packages("qgg")` if needed).
+
+## 1. Prepare the mouse records and pedigree
+
+Body weight is measured at eight weeks in this F2 teaching population. The phenotype file has 1,177 records; the pedigree includes ancestors. Recorded trait units are not supplied in file metadata. Shared helpers download pinned public data, check their checksums and validate the identifier mapping. Download the [helper script](../scripts/mouse_practical_helpers.R) with the tutorial, retaining the `scripts/` and `tutorials/` folders.
+
+```{r}
+#| label: prepare-pedigree
+source("../scripts/mouse_practical_helpers.R")
+data <- mouse_pedigree_data()
+mouse <- data$mouse
+pedigree <- data$pedigree
+ids <- data$ids
+c(records = nrow(mouse), pedigree_individuals = nrow(pedigree))
+head(pedigree)
+table(pedigree$generation)
+```
+
+**Question 1.** Why does the pedigree contain more individuals than the phenotype file?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Ancestors establish relationships even when they have no body-weight record in the analysis. The historical pedigree uses 0 for unknown parents; the helper converts it to `NA`. Source phenotype row labels are checked against explicit pedigree IDs and parent labels, rather than treated as row positions.
+:::
+
+## 2. Calculate pedigree relationships
+
+The additive relationship matrix $A$ is twice the kinship matrix. Under unrelated, noninbred founder assumptions, founder diagonals are 1. With known parents $s,d$, the tabular recursion is
+
+$$A_{ij}=\tfrac12(A_{sj}+A_{dj}),\qquad A_{ii}=1+\tfrac12A_{sd}.$$
+
+An unknown parent's contribution to the off-diagonal recursion is zero. Parents must precede offspring. Here is a small family: two unrelated founders and two full siblings.
+
+```{r}
+#| label: small-family
+family <- data.frame(id = c("sire", "dam", "child1", "child2"),
+                     sire = c(NA, NA, "sire", "sire"),
+                     dam = c(NA, NA, "dam", "dam"))
+A_small <- mouse_relationship(family)
+A_small
+expected <- matrix(c(1,0,.5,.5, 0,1,.5,.5,
+                     .5,.5,1,.5, .5,.5,.5,1), 4, 4)
+stopifnot(max(abs(A_small-expected)) < 1e-12)
+# Verify the teaching recursion against an installed public interface.
+family_qgg <- family
+family_qgg[is.na(family_qgg)] <- "0"
+stopifnot(max(abs(A_small-qgg::grm(pedigree=family_qgg))) < 1e-12)
+A <- mouse_relationship(pedigree)
+K <- A[ids, ids, drop = FALSE]
+stopifnot(identical(rownames(K), ids), identical(colnames(K), ids))
+K[1:5, 1:5]
+range(diag(K))
+```
+
+**Question 2.** Why do the siblings have relationship 0.5, not 1? What does a diagonal above 1 mean?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Full siblings share an expected half of their additive inheritance from unrelated parents; their realized genomes need not be identical. A diagonal is $1+F_i$, where $F_i$ is pedigree inbreeding under the declared founder base. Founder relatedness is an assumption, not established by missing parent records.
+:::
+
+```{r}
+#| label: fig-relationships
+#| fig-cap: "Pedigree relationships among the first 40 phenotype records, in source order."
+image(seq_len(40), seq_len(40), K[1:40,1:40],
+      xlab="Record index", ylab="Record index", col=hcl.colors(20,"Blues"))
+```
+
+The full relationship matrix is retained for this small teaching dataset. Plotting a labelled subset is easier to interpret than drawing every matrix entry. Dense whole-population matrices are not the default for large genomic workflows.
+
+## 3. Specify a variance-component model
+
+For the recorded individuals,
+
+$$y=Xb+u+e,\quad u\sim N(0,A\sigma_A^2),\quad e\sim N(0,I\sigma_E^2),$$
+
+with independent $u,e$. Fixed effects $b$ describe sex and replicate means. The pedigree base, additive model and independent residual assumptions determine interpretation. Maternal/shared-litter effects and dominance are not included; family resemblance can therefore be attributed incorrectly if these omissions matter.
+
+```{r}
+#| label: fit-pedigree-model
+X <- model.matrix(~ sex + reps, data=mouse)
+y <- mouse$BW
+names(y) <- ids
+fitA <- mouse_fit(y, X, K, "A")
+fitA$theta
+c(iterations=fitA$niter, qgg_version=as.character(packageVersion("qgg")))
+VA <- unname(fitA$theta["A"])
+VE <- unname(fitA$theta["E"])
+h2 <- VA/(VA+VE)
+h2
+```
+
+We use the installed [qgg REML interface](https://psoerensen.github.io/qgg/reference/greml.html). The helper stops if the iteration limit is reached or fitted components are invalid; reaching convergence supports a numerical result, not the biological adequacy of the model.
+
+**Question 3.** Is $\sigma_A^2+\sigma_E^2$ the raw variance of body weight?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. Sex and replicate variation are represented by fixed effects. The model's genetic and residual scales describe conditional variation; the raw phenotype variance also includes fixed group differences. For individual $i$, conditional variance is $A_{ii}\sigma_A^2+\sigma_E^2$. The reported $h^2$ uses the noninbred base convention, not an individual-specific diagonal adjustment.
+:::
+
+## 4. Interpret heritability and uncertainty
+
+Under that base convention, narrow-sense heritability is
+
+$$h^2=\frac{\sigma_A^2}{\sigma_A^2+\sigma_E^2}.$$
+
+The fitted value is `r round(h2,3)`. It describes the model and population; it is not the fraction of an individual's phenotype caused by genes, nor a universal property of body weight.
+
+The installed qgg 1.1.6 implementation returns the estimated covariance matrix of the variance components in `asd`. Apply the delta method to propagate its uncertainty to the ratio. Check the version before relying on this representation.
+
+```{r}
+#| label: heritability-uncertainty
+stopifnot(packageVersion("qgg") == "1.1.6",
+          is.matrix(fitA$asd), all(dim(fitA$asd)==c(2,2)))
+gradient <- c(VE, -VA)/(VA+VE)^2
+se_h2 <- sqrt(drop(t(gradient) %*% fitA$asd %*% gradient))
+data.frame(h2=h2, approximate_SE=se_h2,
+           Wald_lower=h2-1.96*se_h2, Wald_upper=h2+1.96*se_h2)
+```
+
+This is a local asymptotic approximation, not a bounded confidence interval procedure. Do not clip its endpoints and call that a calibrated interval. Limited founder families, omitted shared environment and relationship assumptions can matter beyond this reported uncertainty.
+
+## Exercises
+
+1. Calculate phenotype variance and compare it with the sum of model components.
+2. Add a hypothetical offspring of `child1` and `child2` to the small family. Calculate its pedigree inbreeding.
+3. Explain why changing environment or population can change heritability even if gene effects do not change.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+c(raw_variance=var(y), model_component_sum=VA+VE)
+inbred_family <- rbind(family,
+  data.frame(id="offspring", sire="child1", dam="child2"))
+A_inbred <- mouse_relationship(inbred_family)
+F_offspring <- A_inbred["offspring","offspring"]-1
+stopifnot(abs(F_offspring-0.25)<1e-12)
+F_offspring
+```
+The offspring of the full siblings has $F=0.25$ under this founder base. Heritability is a ratio: altered allele frequencies, genetic base, environmental variance or measurement design can change it.
+:::
+
+## Next practical
+
+[Practical 4](mouse_pedigree_breeding_values.qmd) uses the fitted relationship model to predict breeding values and explains shrinkage, prediction uncertainty and ranking.

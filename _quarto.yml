@@ -5,9 +5,13 @@ project:
     - index.qmd
     - tutorials/mouse_quantitative_traits.qmd
     - tutorials/mouse_single_locus.qmd
+    - tutorials/mouse_genetic_parameters.qmd
+    - tutorials/mouse_pedigree_breeding_values.qmd
+    - tutorials/mouse_genomic_breeding_values.qmd
     - slides/introduction_quantitative_genetics.qmd
     - slides/introduction_quantitative_genetics_narrated.qmd
   resources:
+    - scripts/mouse_practical_helpers.R
     - images/**
     - narration/**
 
@@ -27,6 +31,12 @@ website:
             href: tutorials/mouse_quantitative_traits.html
           - text: "2. Single-locus variation"
             href: tutorials/mouse_single_locus.html
+          - text: "3. Genetic parameters"
+            href: tutorials/mouse_genetic_parameters.html
+          - text: "4. Pedigree breeding values"
+            href: tutorials/mouse_pedigree_breeding_values.html
+          - text: "5. Genomic breeding values"
+            href: tutorials/mouse_genomic_breeding_values.html
       - text: "qgteach"
         href: https://psoerensen.github.io/qgteach/
 

@@ -1,0 +1,210 @@
+---
+title: "Predicting genomic breeding values"
+subtitle: "Practical 5: Genomic relationships, GBLUP and held-out prediction"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Align genotype and phenotype identities; define a genomic relationship scale; compare pedigree BLUP and GBLUP; and distinguish model agreement, in-sample fit and held-out phenotype prediction.
+
+Continue from [Practical 4](mouse_pedigree_breeding_values.qmd). Use base R, `qgg` and the [shared helper script](../scripts/mouse_practical_helpers.R). The analyses use the existing small mouse teaching dataset; they are not a benchmark or breeding-strategy qualification.
+
+## 1. Inspect and align imputed genotypes
+
+```{r}
+#| label: genomic-data
+source("../scripts/mouse_practical_helpers.R")
+data <- mouse_pedigree_data()
+mouse <- data$mouse
+ids <- data$ids
+genotypes <- mouse_file("genotypes_imputed",
+  "cd21078d4def9df35e97789396c730e1e73c3958",
+  "c3b04ffca04a05f9b8da248873eca689")
+stopifnot(is.matrix(genotypes), !is.null(rownames(genotypes)),
+          !is.null(colnames(genotypes)), !anyDuplicated(rownames(genotypes)),
+          !anyDuplicated(colnames(genotypes)), all(ids %in% rownames(genotypes)),
+          all(is.finite(genotypes)), all(genotypes >= 0 & genotypes <= 2))
+dim(genotypes)
+range(genotypes)
+M <- genotypes[ids,,drop=FALSE]
+stopifnot(identical(rownames(M), ids))
+```
+
+The source contains 1,267 individuals and 1,813 marker columns. Values are supplied imputed dosages on a 0–2 scale; missing calls have already been handled upstream. This file does not establish the imputation procedure, physical marker metadata or allele orientation. Column labels are identifiers, not verified genome positions. We use this supplied representation for a teaching calculation without inferring those missing details.
+
+**Question 1.** Why can matching dimensions still produce an incorrect analysis?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Row orders may differ. A phenotype can be assigned another individual's relationships even when matrix dimensions agree. We select rows by checked character IDs and verify the resulting order. Marker column ordering must also be retained when applying a training transformation to validation genotypes.
+:::
+
+## 2. Define the genomic relationship matrix
+
+For this tutorial, standardize each retained marker using the phenotype sample's mean and sample standard deviation, and define
+
+$$W_{ij}=\frac{M_{ij}-\bar M_j}{s_j},\qquad G=WW^T/m.$$
+
+Markers with zero variance are excluded. Every retained standardized marker receives equal weight. This is an explicit standardized-marker kernel, not the same normalization as a pooled $2p_j(1-p_j)$ denominator. Its base is the specified reference sample, rather than the pedigree founder base.
+
+```{r}
+#| label: genomic-kernel
+marker_sd <- apply(M,2,sd)
+retained <- is.finite(marker_sd) & marker_sd > 0
+W <- scale(M[,retained,drop=FALSE])
+G <- tcrossprod(W)/ncol(W)
+dimnames(G) <- list(ids,ids)
+A <- mouse_relationship(data$pedigree)
+K <- A[ids,ids,drop=FALSE]
+c(retained_markers=ncol(W), excluded_markers=sum(!retained))
+summary(diag(G))
+stopifnot(isTRUE(all.equal(G,t(G),tolerance=1e-10)))
+# A transparent tiny kernel check: two individuals, one standardized marker.
+stopifnot(max(abs(tcrossprod(matrix(c(-1,1),2,1))-
+                   matrix(c(1,-1,-1,1),2,2))) < 1e-12)
+```
+
+This dense calculation is appropriate for the teaching file. Larger workflows should use supported genomic resources and bounded computation. A centered $G$ can be singular; positive residual variance makes $V=G\sigma_G^2+I\sigma_E^2$ invertible without adding an arbitrary ridge to $G$.
+
+```{r}
+#| label: fig-relationship-comparison
+#| fig-cap: "Pedigree and genomic relationships among the same first 40 records. Each panel has its own color scale."
+#| fig-width: 9
+#| fig-height: 5
+local({
+  old <- par(mfrow=c(1,2)); on.exit(par(old))
+  image(1:40,1:40,K[1:40,1:40],main="Pedigree A",
+        xlab="Record index",ylab="Record index",col=hcl.colors(20,"Blues"))
+  image(1:40,1:40,G[1:40,1:40],main="Genomic G",
+        xlab="Record index",ylab="Record index",col=hcl.colors(20,"Blue-Red 3"))
+})
+```
+
+**Question 2.** Why can $G$ contain negative off-diagonal entries?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Genomic similarities are centered relative to the chosen sample. A negative value indicates less similarity than that reference, not negative biological kinship. Pedigree $A$ measures expected relationships relative to assumed founders; its entries and $G$ entries are not automatically on interchangeable bases.
+:::
+
+## 3. Fit and compare evaluations
+
+GBLUP uses $u\sim N(0,G\sigma_G^2)$ with the same sex/replicate fixed effects and independent residual model as before. Pedigree BLUP uses $A$ instead. Fit each separately, on identical records.
+
+```{r}
+#| label: fit-genomic-model
+X <- model.matrix(~sex+reps,data=mouse)
+y <- mouse$BW
+names(y) <- ids
+fitA <- mouse_fit(y,X,K,"A")
+fitG <- mouse_fit(y,X,G,"G")
+knitr::kable(rbind(pedigree=fitA$theta, genomic=fitG$theta),digits=3,
+             col.names=c("Relationship scale","Residual variance"))
+c(pedigree_iterations=fitA$niter, genomic_iterations=fitG$niter)
+uA <- drop(fitA$g[,"A"])
+uG <- drop(fitG$g[,"G"])
+cor(uA,uG)
+```
+
+```{r}
+#| label: fig-evaluation-agreement
+#| fig-cap: "Agreement between pedigree and genomic evaluations fitted using the same phenotypes; this is not independent validation."
+plot(uA,uG,pch=16,cex=0.5,col="#247BA0",
+     xlab="Pedigree breeding-value prediction",
+     ylab="Genomic breeding-value prediction")
+abline(0,1,lty=2)
+```
+
+**Question 3.** Does higher agreement with pedigree predictions prove better genomic prediction?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. Both evaluations use the same records, and neither is observed truth. Differences reflect relationship information, reference scale and fitted model components. Compare prediction performance on records excluded from fitting, with a split that reflects the intended use.
+:::
+
+## 4. Predict a held-out replicate
+
+Use replicates 1–2 for training and replicate 3 for validation. This illustrates prediction of phenotypes in a held-out replicate, with relatives potentially present in training. It is not validation in unrelated families or a future-generation experiment.
+
+Replicate 3 has no training observations from which to estimate its fixed effect. For a declared baseline, fit **sex only** in this validation exercise. An unmodelled replicate shift may affect calibration. Recompute marker means and scales using training genotypes only, and fit variance components using training phenotypes only.
+
+```{r}
+#| label: heldout-prediction
+training <- as.character(mouse$reps) != "3"
+validation <- !training
+Xv <- model.matrix(~sex,data=mouse)
+Mt <- M[training,,drop=FALSE]
+center_t <- colMeans(Mt)
+scale_t <- apply(Mt,2,sd)
+keep_t <- is.finite(scale_t) & scale_t > 0
+Wt <- sweep(sweep(Mt[,keep_t,drop=FALSE],2,center_t[keep_t],"-"),
+            2,scale_t[keep_t],"/")
+Wv <- sweep(sweep(M[validation,keep_t,drop=FALSE],2,center_t[keep_t],"-"),
+            2,scale_t[keep_t],"/")
+Gtt <- tcrossprod(Wt)/ncol(Wt)
+Gvt <- Wv %*% t(Wt)/ncol(Wt)
+dimnames(Gtt) <- list(ids[training],ids[training])
+fit_train <- mouse_fit(y[training],Xv[training,,drop=FALSE],Gtt,"G")
+VG_t <- unname(fit_train$theta["G"])
+VE_t <- unname(fit_train$theta["E"])
+Vt <- VG_t*Gtt + diag(VE_t,sum(training))
+residual_t <- y[training]-drop(Xv[training,,drop=FALSE] %*% fit_train$b)
+uhat_validation <- drop(VG_t*Gvt %*% solve(Vt,residual_t))
+predicted_validation <- drop(Xv[validation,,drop=FALSE] %*% fit_train$b) +
+                        uhat_validation
+baseline_validation <- predict(lm(BW~sex,data=mouse[training,]),
+                               newdata=mouse[validation,])
+validation_results <- data.frame(
+  model=c("Training sex means","Training GBLUP"),
+  RMSE=c(sqrt(mean((y[validation]-baseline_validation)^2)),
+         sqrt(mean((y[validation]-predicted_validation)^2))),
+  correlation=c(cor(y[validation],baseline_validation),
+                cor(y[validation],predicted_validation)))
+knitr::kable(validation_results,digits=3)
+c(training_records=sum(training), validation_records=sum(validation),
+  training_fit_iterations=fit_train$niter)
+```
+
+```{r}
+#| label: fig-validation
+#| fig-cap: "Body-weight predictions for replicate 3 using only replicate 1–2 phenotypes for training."
+plot(predicted_validation,y[validation],pch=16,cex=0.6,col="#247BA0",
+     xlab="Held-out predicted body weight",ylab="Observed body weight")
+abline(0,1,lty=2)
+```
+
+These metrics describe held-out **phenotype** prediction, including sex differences. They are not correlations with true breeding values. A single split does not establish general superiority or calibrated uncertainty. Upstream imputation was supplied; we cannot verify whether that preprocessing was independent of the split.
+
+**Question 4.** Why report RMSE as well as correlation?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Correlation describes association and can remain high despite an offset or incorrect scale. RMSE measures errors in trait units. Family overlap, replicate shifts and the target population determine what this exercise can support.
+:::
+
+## Exercises
+
+1. Compare the genomic and pedigree prediction rankings. Are the highest-ranked mice identical?
+2. Count how many validation sires also occur in training. What deployment question does this split address?
+3. Design a validation split for predicting new families. State what preprocessing and model fitting must be repeated, without running a broad validation campaign.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+evaluations <- data.frame(id=ids,pedigree=uA,genomic=uG)
+head(evaluations[order(-evaluations$genomic),])
+validation_sires <- unique(as.character(mouse$sire[validation]))
+training_sires <- unique(as.character(mouse$sire[training]))
+c(validation_sires=length(validation_sires),
+  shared_sires=sum(validation_sires %in% training_sires))
+```
+Rank differences follow differences in information and model bases. With shared sires, the split examines prediction across replicates in related material. For new-family prediction, assign whole families to validation, define treatment of connected relatives, recompute preprocessing on training information and re-estimate variance components. Compare appropriate baselines and retain the intended deployment assumptions.
+:::
+
+## From evaluation to breeding decisions
+
+The five practicals progress from phenotype exploration to marker effects, pedigree variance estimation, BLUP and genomic evaluation. Selection objectives, economic weights and mating decisions are separate tasks for `gsel`; biological offspring simulation belongs in `gsim`. Real-data predicted breeding values remain distinct from simulated truth.
