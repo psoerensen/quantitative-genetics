@@ -8,6 +8,7 @@ project:
     - tutorials/mouse_genetic_parameters.qmd
     - tutorials/mouse_pedigree_breeding_values.qmd
     - tutorials/mouse_genomic_breeding_values.qmd
+    - tutorials/breeding_objectives_indices.qmd
     - slides/introduction_quantitative_genetics.qmd
     - slides/introduction_quantitative_genetics_narrated.qmd
   resources:
@@ -37,6 +38,8 @@ website:
             href: tutorials/mouse_pedigree_breeding_values.html
           - text: "5. Genomic breeding values"
             href: tutorials/mouse_genomic_breeding_values.html
+          - text: "6. Breeding objectives and indices"
+            href: tutorials/breeding_objectives_indices.html
       - text: "qgteach"
         href: https://psoerensen.github.io/qgteach/
 

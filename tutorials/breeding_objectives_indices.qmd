@@ -1,0 +1,225 @@
+---
+title: "Breeding objectives and selection indices"
+subtitle: "Quantitative Genetics Practical 6: From genetic evaluation to selection decisions"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Define a labelled breeding objective; distinguish economic weights from prediction coefficients; construct a linear selection index from supplied covariance inputs; interpret model-based accuracy and expected response; and explain why ranking alone does not define a breeding programme.
+
+Continue from [Practical 5](mouse_genomic_breeding_values.qmd) and the slides on [selection on complex traits](../slides/introduction_quantitative_genetics.qmd#selection-on-complex-traits). This practical uses hypothetical growth/feed examples to introduce two-trait decisions. They are not new measurements or fitted multivariate results for the mouse dataset. All calculations use base R.
+
+## 1. Define the breeding objective
+
+Let $u$ be a vector of additive breeding-value deviations on a fixed genetic base, and $a$ a vector of marginal economic values in currency per trait unit. Define aggregate genetic merit
+
+$$H=a^Tu.$$
+
+Here growth and feed consumption are measured in kg over the same production period. A larger growth deviation is assigned a positive value; greater feed consumption is assigned a cost. These are hypothetical values chosen for teaching, not an economic assessment of a real enterprise.
+
+```{r}
+#| label: breeding-objective
+u <- rbind(A=c(growth=5,feed=6),B=c(growth=4,feed=2),
+           C=c(growth=3,feed=1),D=c(growth=6,feed=8))
+a <- c(growth=2,feed=-1)
+stopifnot(identical(colnames(u),names(a)))
+H <- drop(u %*% a)
+knitr::kable(data.frame(candidate=rownames(u),u,objective=H,
+                       rank=rank(-H,ties.method="min")),row.names=FALSE)
+stopifnot(identical(unname(H),c(4,6,5,4)))
+```
+
+**Question 1.** Why is the candidate with the largest growth deviation not the highest-ranked candidate?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Candidate D has the highest growth but also the greatest feed deviation. Candidate B has the highest objective, 6 currency units, under these weights. The objective states what is valued; a genetic evaluation supplies predictions and uncertainty about those quantities.
+:::
+
+### Change the objective and preserve units
+
+```{r}
+#| label: weights-and-units
+a_growth <- c(growth=3,feed=-.25)
+H_growth <- drop(u %*% a_growth)
+u_grams <- u
+u_grams[,"growth"] <- 1000*u_grams[,"growth"]
+a_grams <- a
+a_grams["growth"] <- a_grams["growth"]/1000
+H_grams <- drop(u_grams %*% a_grams)
+stopifnot(max(abs(H_grams-H))<1e-12)
+```
+
+```{r}
+#| label: fig-objectives
+#| fig-cap: "Changing the breeding objective changes candidate merit; merely changing measurement units with matching weights does not."
+#| fig-width: 9
+#| fig-height: 5
+local({
+  old <- par(mfrow=c(1,2)); on.exit(par(old))
+  barplot(H,col="#247BA0",ylab="Objective (currency units)",main="Growth 2; feed -1")
+  barplot(H_growth,col="#86B7A3",ylab="Objective (currency units)",
+          main="Growth 3; feed -0.25")
+})
+```
+
+An objective must retain its trait units, period and reference base. Re-centering each selected cohort would obscure gain measured against the original base.
+
+## 2. Specify the information used for selection
+
+Now introduce a separate hypothetical set of **measurement deviations** $x$, centered on a fixed external reference mean. These are not assumed to be the observed measurements of the preceding candidate breeding values.
+
+Define $P=\operatorname{Var}(x)$, $C=\operatorname{Cov}(x,u)$ and $G=\operatorname{Var}(u)$. Covariance matrices are supplied population moments, not estimates from four candidates. A matrix's labels and units are part of its meaning.
+
+```{r}
+#| label: index-inputs
+traits <- c("growth","feed")
+x <- rbind(A=c(growth=2,feed=1),B=c(growth=1,feed=-1),
+           C=c(growth=-1,feed=-2),D=c(growth=3,feed=4))
+P <- matrix(c(4,1,1,9),2,2,dimnames=list(traits,traits))
+C <- diag(c(1,4)); G <- diag(c(2,5))
+dimnames(C) <- dimnames(G) <- list(traits,traits)
+stopifnot(identical(colnames(x),rownames(P)),
+          identical(colnames(P),rownames(C)),
+          identical(colnames(C),names(a)),identical(rownames(G),names(a)),
+          isTRUE(all.equal(P,t(P))),isTRUE(all.equal(G,t(G))))
+chol(P) # Positive-definite information covariance.
+# The supplied joint covariance must also be a coherent moment model.
+joint <- rbind(cbind(P,C),cbind(t(C),G))
+stopifnot(min(eigen(joint,symmetric=TRUE,only.values=TRUE)$values)>0)
+```
+
+**Question 2.** Why is $C$ not automatically equal to $G$?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Measurements and breeding values are different quantities. Their cross-covariance depends on what was measured and how it relates to genetic merit. For arbitrary predictions, using genetic covariance in place of the required prediction/merit cross-covariance can double-count or misrepresent information.
+:::
+
+## 3. Solve for a linear index
+
+Choose $I=b^Tx$ to minimize $E[(H-I)^2]$ under the centered moment model. Since
+
+$$E[(H-I)^2]=a^TGa-2b^TCa+b^TPb,$$
+
+differentiation gives $Pb=Ca$. With positive-definite $P$,
+
+$$b=P^{-1}Ca.$$
+
+Use a linear solve rather than explicitly constructing an inverse. Economic weights $a$ define the objective; index coefficients $b$ account for information variance and cross-covariance.
+
+```{r}
+#| label: fit-index
+b <- drop(solve(P,C %*% a))
+I <- drop(x %*% b)
+naive <- drop(x %*% a)
+stopifnot(max(abs(P %*% b-C %*% a))<1e-12)
+knitr::kable(data.frame(candidate=rownames(x),index=I,
+                       raw_weighted_measurements=naive,
+                       rank=rank(-I,ties.method="min")),digits=3,row.names=FALSE)
+b
+# Independent diagonal oracle: P=(4,9), C=(1,4), a=(2,-1).
+b_diagonal <- drop(solve(diag(c(4,9)),diag(c(1,4)) %*% c(2,-1)))
+stopifnot(max(abs(b_diagonal-c(.5,-4/9)))<1e-12)
+```
+
+```{r}
+#| label: fig-index
+#| fig-cap: "Index coefficients reflect the covariance model; the resulting index ranks supplied measurement deviations."
+#| fig-width: 9
+#| fig-height: 5
+local({
+  old <- par(mfrow=c(1,2)); on.exit(par(old))
+  barplot(b,col=c("#247BA0","#D8A47F"),ylab="Index coefficient")
+  abline(h=0,col="gray50")
+  barplot(I,col="#86B7A3",ylab="Index (currency units)")
+  abline(h=0,col="gray50")
+})
+```
+
+**Question 3.** Does directly applying economic weights to measurements produce the same ranking as the index?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Not necessarily. The raw score treats measurement deviations like breeding values. The index weights account for their different variances and information about genetic merit. Candidate B has the largest index under this model. This is a ranking from supplied moments, not evidence that those moments or prediction performance have been fitted correctly.
+:::
+
+## 4. Calculate model-based index accuracy
+
+Under the supplied moments,
+
+$$\operatorname{Var}(I)=b^TPb,\quad
+\operatorname{Cov}(I,H)=b^TCa,\quad \operatorname{Var}(H)=a^TGa.$$
+
+The model correlation is their covariance divided by the product of standard deviations. At the optimal index, $\operatorname{Cov}(I,H)=\operatorname{Var}(I)$.
+
+```{r}
+#| label: index-accuracy
+VI <- drop(crossprod(b,P %*% b))
+CIH <- drop(crossprod(b,C %*% a))
+VH <- drop(crossprod(a,G %*% a))
+accuracy <- CIH/sqrt(VI*VH)
+c(index_variance=VI,objective_variance=VH,model_accuracy=accuracy,
+  prediction_error_variance=VH-2*CIH+VI)
+stopifnot(abs(CIH-VI)<1e-12,accuracy>=0,accuracy<=1,
+          VH-2*CIH+VI>=0)
+```
+
+This is model-based accuracy given the assumed covariance inputs. It is not estimated by correlating four candidate scores with hidden truth, and it does not replace validation of fitted genetic evaluations.
+
+## 5. Predict a response under explicit selection assumptions
+
+For a jointly Gaussian $(x,u)$ population and upper-tail truncation on $I$, selecting fraction $f$ gives standardized intensity $i=\phi(z)/f$, where $z=\Phi^{-1}(1-f)$. The model mean breeding-value difference of selected candidates is
+
+$$\Delta u=\frac{i\,C^Tb}{\sqrt{\operatorname{Var}(I)}}.$$
+
+For the optimal index, objective difference is $\Delta H=i\sqrt{\operatorname{Var}(I)}$. These distribution and selection assumptions are additional to solving the covariance equation.
+
+```{r}
+#| label: expected-response
+fraction <- .25
+threshold <- qnorm(1-fraction)
+intensity <- dnorm(threshold)/fraction
+response <- drop(intensity*t(C) %*% b/sqrt(VI))
+objective_response <- drop(crossprod(a,response))
+response
+c(intensity=intensity,objective_difference=objective_response)
+stopifnot(abs(objective_response-intensity*sqrt(VI))<1e-12)
+```
+
+**Question 4.** Is this automatically next-generation gain per year?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. It is the expected mean breeding-value difference of selected candidates under the model. In a simple additive, nonoverlapping-generation setting with unchanged base and no other shifts, offspring gain depends on the selected parents' gene contributions across both roles; equal selected sire/dam means give the same predicted offspring mean difference. Annual gain additionally needs a declared generation interval. Mating, contribution limits, diversity and costs are separate decisions.
+:::
+
+## Exercises
+
+1. Multiply all economic weights by 10. Which quantities change and which rankings remain?
+2. Reverse the trait order consistently in $x,P,C,G,a$. Verify the index is unchanged.
+3. If only growth matters, define the objective weights and recompute the coefficients.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+b10 <- drop(solve(P,C %*% (10*a)))
+stopifnot(max(abs(drop(x %*% b10)-10*I))<1e-12)
+order2 <- c("feed","growth")
+b2 <- drop(solve(P[order2,order2],C[order2,order2] %*% a[order2]))
+stopifnot(max(abs(drop(x[,order2] %*% b2)-I))<1e-12)
+a_only_growth <- c(growth=2,feed=0)
+solve(P,C %*% a_only_growth)
+```
+A positive common scaling changes objective/index units but not ranking or correlation accuracy. Consistent label reordering preserves predictions. Even when feed has zero economic weight, it can receive an index coefficient through covariance with the growth information. Information traits and objective traits need not be identical in a general index.
+:::
+
+## Package connection and next topic
+
+`gsel` owns objectives, selection policies and programme design. Its current [objective and index examples](https://github.com/psoerensen/gsel/tree/main/inst/examples) are base-R reference calculations, not exported scientific APIs. The objective and index examples here use the same supplied values. Fitting genetic evaluations remains with estimation tools; `gsim` owns biological generation.
+
+Next specify eligibility, quotas, parent contributions and mating, then evaluate gain, diversity, time and cost against a fixed reference. An index score alone does not define a breeding programme.

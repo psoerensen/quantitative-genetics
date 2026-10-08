@@ -7,6 +7,8 @@
 - [Predicting pedigree breeding values](mouse_pedigree_breeding_values.qmd): Practical 4.
 - [Predicting genomic breeding values](mouse_genomic_breeding_values.qmd): Practical 5.
 
+- [Breeding objectives and selection indices](breeding_objectives_indices.qmd): Practical 6, using base R and hypothetical covariance inputs.
+
 Practicals 3–5 require qgg and the shared script in scripts/mouse_practical_helpers.R.
 
 Render an individual page from the repository root, for example:

@@ -37,6 +37,8 @@ After completing the course, students should be able to:
 - [Practical 4: Predicting pedigree breeding values](tutorials/mouse_pedigree_breeding_values.qmd) — BLUP, shrinkage and reliability.
 - [Practical 5: Predicting genomic breeding values](tutorials/mouse_genomic_breeding_values.qmd) — genomic relationships and held-out phenotype prediction.
 
+- [Practical 6: Breeding objectives and selection indices](tutorials/breeding_objectives_indices.qmd) — economic weights, covariance inputs and expected response.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).
