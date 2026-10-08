@@ -3986,7 +3986,7 @@ window.Quarto = {
     <span class="navbar-title">Quantitative Genetics</span>
     </a>
   </div>
-            <div id="quarto-search" class="" title="Search"></div>
+            <div id="quarto-search" class title="Search"></div>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
@@ -4092,7 +4092,9 @@ window.Quarto = {
   <li><a href="#calculate-pedigree-relationships" id="toc-calculate-pedigree-relationships" class="nav-link" data-scroll-target="#calculate-pedigree-relationships">2. Calculate pedigree relationships</a></li>
   <li><a href="#specify-a-variance-component-model" id="toc-specify-a-variance-component-model" class="nav-link" data-scroll-target="#specify-a-variance-component-model">3. Specify a variance-component model</a></li>
   <li><a href="#interpret-heritability-and-uncertainty" id="toc-interpret-heritability-and-uncertainty" class="nav-link" data-scroll-target="#interpret-heritability-and-uncertainty">4. Interpret heritability and uncertainty</a></li>
+  <li><a href="#regression-on-relatives-a-complementary-model" id="toc-regression-on-relatives-a-complementary-model" class="nav-link" data-scroll-target="#regression-on-relatives-a-complementary-model">Regression on relatives: a complementary model</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#interactive-exploration" id="toc-interactive-exploration" class="nav-link" data-scroll-target="#interactive-exploration">Interactive exploration</a></li>
   <li><a href="#next-practical" id="toc-next-practical" class="nav-link" data-scroll-target="#next-practical">Next practical</a></li>
   </ul>
 </nav>
@@ -4351,6 +4353,31 @@ Suggested answer
 </div>
 <p>This is a local asymptotic approximation, not a bounded confidence interval procedure. Do not clip its endpoints and call that a calibrated interval. Limited founder families, omitted shared environment and relationship assumptions can matter beyond this reported uncertainty.</p>
 </section>
+<section id="regression-on-relatives-a-complementary-model" class="level2">
+<h2 class="anchored" data-anchor-id="regression-on-relatives-a-complementary-model">Regression on relatives: a complementary model</h2>
+<p>Regression on relatives connects family resemblance to the variance model. In an illustrative noninbred population, suppose <span class="math inline">\(V_P=V_A+V_E\)</span>, mates are unrelated, and environmental deviations are independent across individuals and generations. Additive inheritance gives covariance <span class="math inline">\(V_A/2\)</span> between a parent’s phenotype and its offspring’s phenotype. The offspring-on-one-parent regression slope is therefore</p>
+<p><span class="math display">\[b_{\mathrm{one\ parent}}=\frac{V_A/2}{V_P}=\frac12h^2.\]</span></p>
+<p>For the midparent phenotype <span class="math inline">\(M=(P_s+P_d)/2\)</span>, unrelated mates give <span class="math inline">\(\operatorname{Var}(M)=V_P/2\)</span> and <span class="math inline">\(\operatorname{Cov}(P_o,M)=V_A/2\)</span>. Thus</p>
+<p><span class="math display">\[b_{\mathrm{midparent}}=\frac{V_A/2}{V_P/2}=h^2.\]</span></p>
+<p>At a hypothetical <span class="math inline">\(h^2=0.4\)</span>, these slopes are 0.2 and 0.4. They are expected slopes under the stated population model, rather than regressions fitted to the mouse data. Assortative mating, shared environment, maternal effects or a different sampling population can change their interpretation. Family resemblance alone does not separate all these sources.</p>
+<p><strong>Interpretation question.</strong> Why would doubling every regression slope on relatives fail to give a general heritability estimator?</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Suggested answer">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Suggested answer
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>The factor depends on which relatives and observation units enter the regression and on their covariance model. Doubling the one-parent slope gives <span class="math inline">\(h^2\)</span> under the stated assumptions; doubling the midparent slope does not. Environmental covariance can contribute to either slope. The mouse mixed model uses its pedigree and declared fixed and random effects rather than replacing them with a generic family regression.</p>
+</div>
+</div>
+</div>
+</section>
 <section id="exercises" class="level2">
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ol type="1">
@@ -4359,7 +4386,7 @@ Suggested answer
 <li>Explain why changing environment or population can change heritability even if gene effects do not change.</li>
 </ol>
 <div class="callout callout-style-default callout-note callout-titled" title="Suggested solutions">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
@@ -4368,7 +4395,7 @@ Suggested solutions
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <div class="cell">
 <details class="code-fold">
@@ -4396,6 +4423,10 @@ Suggested solutions
 </div>
 </div>
 </div>
+</section>
+<section id="interactive-exploration" class="level2">
+<h2 class="anchored" data-anchor-id="interactive-exploration">Interactive exploration</h2>
+<p>Open <a href="https://peter-soerensen.shinyapps.io/estimation_heritability_regression">Heritability Estimation Using Different Types of Relatives</a> to explore regression on relatives. Compare the relatives and observation units used in the app with the one-parent and midparent models above, and explain the assumptions behind a heritability interpretation.</p>
 </section>
 <section id="next-practical" class="level2">
 <h2 class="anchored" data-anchor-id="next-practical">Next practical</h2>

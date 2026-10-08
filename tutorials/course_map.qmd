@@ -186,6 +186,20 @@ Install `qgg` and `gsim` before the relevant session using the instructions in t
 
 Course materials own the explanations and exercises. Package connections do not imply that every teaching calculation is an exported package function. Predictions, simulated truth and observed records remain distinct throughout the routes.
 
+## Using the course materials
+
+During lectures, use the slides to introduce the biological question and the practical to connect it to a model and calculation. For independent study, read the assumptions, attempt the interpretation questions and exercises, then open the suggested solutions.
+
+Treat R as a virtual laboratory: first reproduce the supplied example, then change one assumption or parameter and predict its consequences before rerunning. Keep the original population, units and reporting base explicit. For projects, distinguish exploratory teaching examples from an analysis that has been checked for the project's data and sampling design.
+
+For examination preparation, use the learning objectives as prompts: define the quantities, derive or explain the equation, interpret a worked result and name the assumptions needed for that interpretation. The course map supplies routes through the material; assessment requirements are set by the course instructor.
+
+### Further topics and interactive resources
+
+Selective-sweep signatures and a worked ancestral coalescent model remain further extensions. PG 12 distinguishes sequence common ancestry from species separation but does not fit a coalescent model. The current mutation, drift and selection practicals do not supply a genomic sweep-detection workflow.
+
+QG 3 explains regression on relatives, and QG 4 explains prediction from one information source. Those sections provide model checks for interactive exploration: shared environment can alter relative resemblance, and reliability is squared model-based accuracy. Use [Heritability Estimation Using Different Types of Relatives](https://peter-soerensen.shinyapps.io/estimation_heritability_regression) with QG 3 and [Breeding Value Estimation from a Single Information Source](https://peter-soerensen.shinyapps.io/estimation_breeding_value_single_source/) with QG 4.
+
 ## Instructor preparation and assessment
 
 Before a session, choose the route and check its package and input requirements. Run the selected examples, then ask students to explain the assumptions before interpreting their numerical outputs. Use the collapsible solutions after discussion.

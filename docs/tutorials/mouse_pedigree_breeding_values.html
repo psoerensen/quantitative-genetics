@@ -3986,7 +3986,7 @@ window.Quarto = {
     <span class="navbar-title">Quantitative Genetics</span>
     </a>
   </div>
-            <div id="quarto-search" class="" title="Search"></div>
+            <div id="quarto-search" class title="Search"></div>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
@@ -4096,7 +4096,9 @@ window.Quarto = {
   </ul></li>
   <li><a href="#explore-pedigree-predictions" id="toc-explore-pedigree-predictions" class="nav-link" data-scroll-target="#explore-pedigree-predictions">4. Explore pedigree predictions</a></li>
   <li><a href="#quantify-model-based-uncertainty" id="toc-quantify-model-based-uncertainty" class="nav-link" data-scroll-target="#quantify-model-based-uncertainty">5. Quantify model-based uncertainty</a></li>
+  <li><a href="#prediction-from-one-information-source" id="toc-prediction-from-one-information-source" class="nav-link" data-scroll-target="#prediction-from-one-information-source">Prediction from one information source</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#interactive-exploration" id="toc-interactive-exploration" class="nav-link" data-scroll-target="#interactive-exploration">Interactive exploration</a></li>
   <li><a href="#next-practical" id="toc-next-practical" class="nav-link" data-scroll-target="#next-practical">Next practical</a></li>
   </ul>
 </nav>
@@ -4471,6 +4473,19 @@ Suggested answer
 </div>
 </div>
 </section>
+<section id="prediction-from-one-information-source" class="level2">
+<h2 class="anchored" data-anchor-id="prediction-from-one-information-source">Prediction from one information source</h2>
+<p>The own-record example is a special case of prediction from an average of related individuals’ records. For a noninbred candidate, let <span class="math inline">\(a&#39;\)</span> be its additive relationship to each of <span class="math inline">\(n\)</span> recorded individuals, and <span class="math inline">\(a&#39;&#39;\)</span> the relationship between each distinct pair of recorded individuals. Assume each record has variance <span class="math inline">\(V_P\)</span>, additive variance is <span class="math inline">\(V_A=h^2V_P\)</span>, the population mean <span class="math inline">\(\mu\)</span> is known, and residual deviations are independent. Then</p>
+<p><span class="math display">\[\operatorname{Var}(\bar y)=\frac{V_P}{n}\left[1+(n-1)a&#39;&#39;h^2\right],\qquad
+\operatorname{Cov}(u,\bar y)=a&#39;V_A.\]</span></p>
+<p>The best linear prediction under these supplied moments is</p>
+<p><span class="math display">\[\hat u=b(\bar y-\mu),\qquad
+b=\frac{a&#39;nh^2}{1+(n-1)a&#39;&#39;h^2}.\]</span></p>
+<p>For a coherent covariance model, its reliability and model-based accuracy are</p>
+<p><span class="math display">\[r^2=a&#39;b,\qquad r=\sqrt{a&#39;b}.\]</span></p>
+<p>For example, <span class="math inline">\(a&#39;=a&#39;&#39;=0.5\)</span>, <span class="math inline">\(n=10\)</span> and <span class="math inline">\(h^2=0.5\)</span> give <span class="math inline">\(b=10/13\)</span>, reliability <span class="math inline">\(5/13\)</span> and accuracy <span class="math inline">\(\sqrt{5/13}\)</span>, about 0.620. Reporting <span class="math inline">\(a&#39;b\)</span> as accuracy confuses the squared correlation with the correlation.</p>
+<p>Relationships, heritability and record counts must describe a valid joint covariance model; they cannot always be varied independently. In particular, <span class="math inline">\(a&#39;b\)</span> must lie between zero and one, though this bound alone does not validate every underlying relationship. Shared residual effects or an estimated population mean require additional covariance terms. This compact model illustrates the information principle; the mouse BLUP analysis above uses the full relationship matrix and accounts for unknown fixed effects.</p>
+</section>
 <section id="exercises" class="level2">
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ol type="1">
@@ -4522,6 +4537,10 @@ Suggested solutions
 </div>
 </div>
 </div>
+</section>
+<section id="interactive-exploration" class="level2">
+<h2 class="anchored" data-anchor-id="interactive-exploration">Interactive exploration</h2>
+<p>Open <a href="https://peter-soerensen.shinyapps.io/estimation_breeding_value_single_source/">Breeding Value Estimation from a Single Information Source</a> to explore how relationships, heritability and the number of records affect prediction. Change one input at a time, predict the direction of the effect and connect the result to the one-source model above.</p>
 </section>
 <section id="next-practical" class="level2">
 <h2 class="anchored" data-anchor-id="next-practical">Next practical</h2>

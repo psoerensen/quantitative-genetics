@@ -136,6 +136,24 @@ data.frame(h2=h2, approximate_SE=se_h2,
 
 This is a local asymptotic approximation, not a bounded confidence interval procedure. Do not clip its endpoints and call that a calibrated interval. Limited founder families, omitted shared environment and relationship assumptions can matter beyond this reported uncertainty.
 
+## Regression on relatives: a complementary model
+
+Regression on relatives connects family resemblance to the variance model. In an illustrative noninbred population, suppose $V_P=V_A+V_E$, mates are unrelated, and environmental deviations are independent across individuals and generations. Additive inheritance gives covariance $V_A/2$ between a parent's phenotype and its offspring's phenotype. The offspring-on-one-parent regression slope is therefore
+
+$$b_{\mathrm{one\ parent}}=\frac{V_A/2}{V_P}=\frac12h^2.$$
+
+For the midparent phenotype $M=(P_s+P_d)/2$, unrelated mates give $\operatorname{Var}(M)=V_P/2$ and $\operatorname{Cov}(P_o,M)=V_A/2$. Thus
+
+$$b_{\mathrm{midparent}}=\frac{V_A/2}{V_P/2}=h^2.$$
+
+At a hypothetical $h^2=0.4$, these slopes are 0.2 and 0.4. They are expected slopes under the stated population model, rather than regressions fitted to the mouse data. Assortative mating, shared environment, maternal effects or a different sampling population can change their interpretation. Family resemblance alone does not separate all these sources.
+
+**Interpretation question.** Why would doubling every regression slope on relatives fail to give a general heritability estimator?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+The factor depends on which relatives and observation units enter the regression and on their covariance model. Doubling the one-parent slope gives $h^2$ under the stated assumptions; doubling the midparent slope does not. Environmental covariance can contribute to either slope. The mouse mixed model uses its pedigree and declared fixed and random effects rather than replacing them with a generic family regression.
+:::
+
 ## Exercises
 
 1. Calculate phenotype variance and compare it with the sum of model components.
@@ -154,6 +172,10 @@ F_offspring
 ```
 The offspring of the full siblings has $F=0.25$ under this founder base. Heritability is a ratio: altered allele frequencies, genetic base, environmental variance or measurement design can change it.
 :::
+
+## Interactive exploration
+
+Open [Heritability Estimation Using Different Types of Relatives](https://peter-soerensen.shinyapps.io/estimation_heritability_regression) to explore regression on relatives. Compare the relatives and observation units used in the app with the one-parent and midparent models above, and explain the assumptions behind a heritability interpretation.
 
 ## Next practical
 

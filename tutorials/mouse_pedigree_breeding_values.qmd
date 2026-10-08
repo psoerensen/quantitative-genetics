@@ -162,6 +162,26 @@ stopifnot(abs(1-scalar_pev/2 - 2/(2+3)) < 1e-12)
 No. Predicted merit and precision answer different questions. Reliability depends on information, relationships and variance assumptions. True breeding values are unavailable for these mice; their empirical prediction accuracy cannot be read from this table.
 :::
 
+## Prediction from one information source
+
+The own-record example is a special case of prediction from an average of related individuals' records. For a noninbred candidate, let $a'$ be its additive relationship to each of $n$ recorded individuals, and $a''$ the relationship between each distinct pair of recorded individuals. Assume each record has variance $V_P$, additive variance is $V_A=h^2V_P$, the population mean $\mu$ is known, and residual deviations are independent. Then
+
+$$\operatorname{Var}(\bar y)=\frac{V_P}{n}\left[1+(n-1)a''h^2\right],\qquad
+\operatorname{Cov}(u,\bar y)=a'V_A.$$
+
+The best linear prediction under these supplied moments is
+
+$$\hat u=b(\bar y-\mu),\qquad
+b=\frac{a'nh^2}{1+(n-1)a''h^2}.$$
+
+For a coherent covariance model, its reliability and model-based accuracy are
+
+$$r^2=a'b,\qquad r=\sqrt{a'b}.$$
+
+For example, $a'=a''=0.5$, $n=10$ and $h^2=0.5$ give $b=10/13$, reliability $5/13$ and accuracy $\sqrt{5/13}$, about 0.620. Reporting $a'b$ as accuracy confuses the squared correlation with the correlation.
+
+Relationships, heritability and record counts must describe a valid joint covariance model; they cannot always be varied independently. In particular, $a'b$ must lie between zero and one, though this bound alone does not validate every underlying relationship. Shared residual effects or an estimated population mean require additional covariance terms. This compact model illustrates the information principle; the mouse BLUP analysis above uses the full relationship matrix and accounts for unknown fixed effects.
+
 ## Exercises
 
 1. Compare ranking by phenotype and by predicted breeding value. How do group adjustments affect interpretation?
@@ -175,6 +195,10 @@ head(predictions[order(predictions$reliability),c("id","breeding_value","reliabi
 ```
 More informative own/relative records can improve precision under an appropriate model. Selection response also depends on mating, inheritance, the objective and the next generation's environment. `gsel` owns decision policies and `gsim` biological simulation; neither fits this pedigree evaluation.
 :::
+
+## Interactive exploration
+
+Open [Breeding Value Estimation from a Single Information Source](https://peter-soerensen.shinyapps.io/estimation_breeding_value_single_source/) to explore how relationships, heritability and the number of records affect prediction. Change one input at a time, predict the direction of the effect and connect the result to the one-source model above.
 
 ## Next practical
 

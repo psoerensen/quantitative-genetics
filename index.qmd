@@ -7,6 +7,16 @@ subtitle: "Foundations of Quantitative Trait Analysis"
 
 This course introduces the mathematical, statistical, and biological foundations used to study quantitative traits. It connects genetic and environmental sources of phenotypic variation with heritability, response to selection, and the genetic architecture of complex traits.
 
+## Core Topics
+
+- **Quantitative variation and gene action:** describe trait distributions and relate allele frequencies to additive and dominance effects in [Practicals 1–2](tutorials/mouse_quantitative_traits.qmd).
+- **Genotypes and environments:** interpret reaction norms, variance components and broad-sense entry-mean heritability in [Practical 12](tutorials/genotype_environment_heritability.qmd).
+- **Genetic parameters and prediction:** use pedigree and genomic relationships for heritability estimation, breeding-value prediction and uncertainty in [Practicals 3–5](tutorials/mouse_genetic_parameters.qmd).
+- **Selection and inheritance:** define breeding objectives, select parents and compare offspring gain, diversity and resource use in [Practicals 6–9](tutorials/breeding_objectives_indices.qmd) and [Practical 11](tutorials/comparing_breeding_programmes.qmd).
+- **Validation and association mapping:** distinguish prediction targets, calibration and association evidence in [Practical 10](tutorials/validating_selection_predictions.qmd) and [Practical 13](tutorials/association_mapping.qmd).
+
+The breeder's equation describes an expected population response under its assumptions. Predicting an individual offspring's phenotype also requires its genetic information and environmental model. Significant marker associations identify statistical evidence; they do not alone establish causal variants.
+
 ## Learning Objectives
 
 After completing the course, students should be able to:
@@ -54,6 +64,17 @@ Start with the [course map](tutorials/course_map.qmd) for prerequisites, R requi
 - [Practical 12: Genotype-by-environment interaction and heritability](tutorials/genotype_environment_heritability.qmd) — reaction norms, replicated trials and broad-sense entry-mean heritability.
 
 - [Practical 13: Association mapping, covariates and multiple testing](tutorials/association_mapping.qmd) — a synthetic marker scan, confounding, linked signals and testing families.
+
+## Interactive Apps
+
+- **[Heritability Estimation Using Different Types of Relatives](https://peter-soerensen.shinyapps.io/estimation_heritability_regression)** — explore narrow-sense heritability estimation using regression on relatives. Use alongside [Practical 3](tutorials/mouse_genetic_parameters.qmd).
+- **[Breeding Value Estimation from a Single Information Source](https://peter-soerensen.shinyapps.io/estimation_breeding_value_single_source/)** — investigate how relationships, heritability and available records affect breeding-value prediction. Use alongside [Practical 4](tutorials/mouse_pedigree_breeding_values.qmd).
+
+## Using the Materials
+
+Use the slides for a conceptual overview, then work through a practical for assumptions, equations and data interpretation. Run the supplied example before changing one parameter at a time; state what should change and explain the observed result. Use the collapsible solutions after attempting the questions.
+
+For independent study or exam preparation, follow a route in the [course map](tutorials/course_map.qmd), explain each model's reference population and observation unit, and practise distinguishing what the result describes from what it cannot establish. Project work should add its own data checks and model assessment before adapting teaching code.
 
 ## Course Hub
 

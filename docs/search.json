@@ -1643,5 +1643,61 @@
     "title": "Association mapping, covariates and multiple testing",
     "section": "Package connection and next topic",
     "text": "Package connection and next topic\nAssociation estimation belongs to the existing estimation/association tools. gpop supplies population and LD summaries, gsim supplies biological known-truth simulation, and gsel consumes genetic evaluations for decisions. This base-R lesson adds no package APIs or large-genome workflow.\nReturn to the course map. For mutation–selection and mutation–drift balance, see PG Practical 9, which joins the evolutionary forces already introduced."
+  },
+  {
+    "objectID": "index.html#core-topics",
+    "href": "index.html#core-topics",
+    "title": "Quantitative Genetics",
+    "section": "Core Topics",
+    "text": "Core Topics\n\nQuantitative variation and gene action: describe trait distributions and relate allele frequencies to additive and dominance effects in Practicals 1–2.\nGenotypes and environments: interpret reaction norms, variance components and broad-sense entry-mean heritability in Practical 12.\nGenetic parameters and prediction: use pedigree and genomic relationships for heritability estimation, breeding-value prediction and uncertainty in Practicals 3–5.\nSelection and inheritance: define breeding objectives, select parents and compare offspring gain, diversity and resource use in Practicals 6–9 and Practical 11.\nValidation and association mapping: distinguish prediction targets, calibration and association evidence in Practical 10 and Practical 13.\n\nThe breeder’s equation describes an expected population response under its assumptions. Predicting an individual offspring’s phenotype also requires its genetic information and environmental model. Significant marker associations identify statistical evidence; they do not alone establish causal variants."
+  },
+  {
+    "objectID": "index.html#using-the-materials",
+    "href": "index.html#using-the-materials",
+    "title": "Quantitative Genetics",
+    "section": "Using the Materials",
+    "text": "Using the Materials\nUse the slides for a conceptual overview, then work through a practical for assumptions, equations and data interpretation. Run the supplied example before changing one parameter at a time; state what should change and explain the observed result. Use the collapsible solutions after attempting the questions.\nFor independent study or exam preparation, follow a route in the course map, explain each model’s reference population and observation unit, and practise distinguishing what the result describes from what it cannot establish. Project work should add its own data checks and model assessment before adapting teaching code."
+  },
+  {
+    "objectID": "tutorials/course_map.html#using-the-course-materials",
+    "href": "tutorials/course_map.html#using-the-course-materials",
+    "title": "Course map",
+    "section": "Using the course materials",
+    "text": "Using the course materials\nDuring lectures, use the slides to introduce the biological question and the practical to connect it to a model and calculation. For independent study, read the assumptions, attempt the interpretation questions and exercises, then open the suggested solutions.\nTreat R as a virtual laboratory: first reproduce the supplied example, then change one assumption or parameter and predict its consequences before rerunning. Keep the original population, units and reporting base explicit. For projects, distinguish exploratory teaching examples from an analysis that has been checked for the project’s data and sampling design.\nFor examination preparation, use the learning objectives as prompts: define the quantities, derive or explain the equation, interpret a worked result and name the assumptions needed for that interpretation. The course map supplies routes through the material; assessment requirements are set by the course instructor.\n\nFurther topics and interactive resources\nSelective-sweep signatures and a worked ancestral coalescent model remain further extensions. PG 12 distinguishes sequence common ancestry from species separation but does not fit a coalescent model. The current mutation, drift and selection practicals do not supply a genomic sweep-detection workflow.\nQG 3 explains regression on relatives, and QG 4 explains prediction from one information source. Those sections provide model checks for interactive exploration: shared environment can alter relative resemblance, and reliability is squared model-based accuracy. Use Heritability Estimation Using Different Types of Relatives with QG 3 and Breeding Value Estimation from a Single Information Source with QG 4."
+  },
+  {
+    "objectID": "tutorials/mouse_genetic_parameters.html#regression-on-relatives-a-complementary-model",
+    "href": "tutorials/mouse_genetic_parameters.html#regression-on-relatives-a-complementary-model",
+    "title": "Estimating genetic parameters",
+    "section": "Regression on relatives: a complementary model",
+    "text": "Regression on relatives: a complementary model\nRegression on relatives connects family resemblance to the variance model. In an illustrative noninbred population, suppose \\(V_P=V_A+V_E\\), mates are unrelated, and environmental deviations are independent across individuals and generations. Additive inheritance gives covariance \\(V_A/2\\) between a parent’s phenotype and its offspring’s phenotype. The offspring-on-one-parent regression slope is therefore\n\\[b_{\\mathrm{one\\ parent}}=\\frac{V_A/2}{V_P}=\\frac12h^2.\\]\nFor the midparent phenotype \\(M=(P_s+P_d)/2\\), unrelated mates give \\(\\operatorname{Var}(M)=V_P/2\\) and \\(\\operatorname{Cov}(P_o,M)=V_A/2\\). Thus\n\\[b_{\\mathrm{midparent}}=\\frac{V_A/2}{V_P/2}=h^2.\\]\nAt a hypothetical \\(h^2=0.4\\), these slopes are 0.2 and 0.4. They are expected slopes under the stated population model, rather than regressions fitted to the mouse data. Assortative mating, shared environment, maternal effects or a different sampling population can change their interpretation. Family resemblance alone does not separate all these sources.\nInterpretation question. Why would doubling every regression slope on relatives fail to give a general heritability estimator?\n\n\n\n\n\n\nSuggested answer\n\n\n\n\n\nThe factor depends on which relatives and observation units enter the regression and on their covariance model. Doubling the one-parent slope gives \\(h^2\\) under the stated assumptions; doubling the midparent slope does not. Environmental covariance can contribute to either slope. The mouse mixed model uses its pedigree and declared fixed and random effects rather than replacing them with a generic family regression."
+  },
+  {
+    "objectID": "tutorials/mouse_pedigree_breeding_values.html#prediction-from-one-information-source",
+    "href": "tutorials/mouse_pedigree_breeding_values.html#prediction-from-one-information-source",
+    "title": "Predicting pedigree breeding values",
+    "section": "Prediction from one information source",
+    "text": "Prediction from one information source\nThe own-record example is a special case of prediction from an average of related individuals’ records. For a noninbred candidate, let \\(a'\\) be its additive relationship to each of \\(n\\) recorded individuals, and \\(a''\\) the relationship between each distinct pair of recorded individuals. Assume each record has variance \\(V_P\\), additive variance is \\(V_A=h^2V_P\\), the population mean \\(\\mu\\) is known, and residual deviations are independent. Then\n\\[\\operatorname{Var}(\\bar y)=\\frac{V_P}{n}\\left[1+(n-1)a''h^2\\right],\\qquad\n\\operatorname{Cov}(u,\\bar y)=a'V_A.\\]\nThe best linear prediction under these supplied moments is\n\\[\\hat u=b(\\bar y-\\mu),\\qquad\nb=\\frac{a'nh^2}{1+(n-1)a''h^2}.\\]\nFor a coherent covariance model, its reliability and model-based accuracy are\n\\[r^2=a'b,\\qquad r=\\sqrt{a'b}.\\]\nFor example, \\(a'=a''=0.5\\), \\(n=10\\) and \\(h^2=0.5\\) give \\(b=10/13\\), reliability \\(5/13\\) and accuracy \\(\\sqrt{5/13}\\), about 0.620. Reporting \\(a'b\\) as accuracy confuses the squared correlation with the correlation.\nRelationships, heritability and record counts must describe a valid joint covariance model; they cannot always be varied independently. In particular, \\(a'b\\) must lie between zero and one, though this bound alone does not validate every underlying relationship. Shared residual effects or an estimated population mean require additional covariance terms. This compact model illustrates the information principle; the mouse BLUP analysis above uses the full relationship matrix and accounts for unknown fixed effects."
+  },
+  {
+    "objectID": "index.html#interactive-apps",
+    "href": "index.html#interactive-apps",
+    "title": "Quantitative Genetics",
+    "section": "Interactive Apps",
+    "text": "Interactive Apps\n\nHeritability Estimation Using Different Types of Relatives — explore narrow-sense heritability estimation using regression on relatives. Use alongside Practical 3.\nBreeding Value Estimation from a Single Information Source — investigate how relationships, heritability and available records affect breeding-value prediction. Use alongside Practical 4."
+  },
+  {
+    "objectID": "tutorials/mouse_genetic_parameters.html#interactive-exploration",
+    "href": "tutorials/mouse_genetic_parameters.html#interactive-exploration",
+    "title": "Estimating genetic parameters",
+    "section": "Interactive exploration",
+    "text": "Interactive exploration\nOpen Heritability Estimation Using Different Types of Relatives to explore regression on relatives. Compare the relatives and observation units used in the app with the one-parent and midparent models above, and explain the assumptions behind a heritability interpretation."
+  },
+  {
+    "objectID": "tutorials/mouse_pedigree_breeding_values.html#interactive-exploration",
+    "href": "tutorials/mouse_pedigree_breeding_values.html#interactive-exploration",
+    "title": "Predicting pedigree breeding values",
+    "section": "Interactive exploration",
+    "text": "Interactive exploration\nOpen Breeding Value Estimation from a Single Information Source to explore how relationships, heritability and the number of records affect prediction. Change one input at a time, predict the direction of the effect and connect the result to the one-source model above."
   }
 ]
