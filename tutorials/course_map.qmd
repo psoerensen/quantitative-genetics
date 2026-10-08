@@ -61,14 +61,41 @@ Practicals 1–5 follow the mouse analysis from observed traits to genetic evalu
 | [QG 9: Relationships, mating and inbreeding](relationships_mating_inbreeding.qmd) | How can equal contributions produce different offspring inbreeding? | Relationship recursion from QG 3; PG 3; QG 7–8 |
 | [QG 10: Validating predictions and decisions](validating_selection_predictions.qmd) | What do family splits, calibration and shortlist outcomes establish? | Regression; QG 5; genetic/environmental distinction |
 | [QG 11: Comparing breeding programmes](comparing_breeding_programmes.qmd) | How do recording policies affect gain, diversity and resource use? | QG 6–10; PG 4 and PG 6 |
+| [QG 12: Genotype by environment and heritability](genotype_environment_heritability.qmd) | How does replication across environments define genetic variance and entry-mean heritability? | QG 2; variance and ANOVA; fits before QG 3 in the slide flow |
 
 Use the [quantitative-genetics slides](../slides/introduction_quantitative_genetics.qmd) to connect trait variation, gene action, covariance, heritability and response to selection. Reading a predecessor can provide conceptual preparation without running its full code.
+
+## Coverage alongside the slides
+
+The practicals cover the central flow, but some slide topics currently have explanation without a matching worked practical. Use this distinction when choosing exercises or assessing students.
+
+| Slide theme | Current practical coverage |
+|---|---|
+| Genotype data, allele frequencies and HWE expectations | PG 1–2; worked counts and expectations, without a formal HWE test |
+| Mating, population structure and identity by descent | PG 3; QG 7 and QG 9 connect parentage to breeding decisions |
+| Diversity, mutation, migration, LD, drift and selection | PG 4–7; finite realizations and model assumptions are explicit |
+| Quantitative variation, covariance and single-locus gene action | QG 1–2; worked mouse analysis and hypothetical checks |
+| Genotype-by-environment interaction and broad-sense entry-mean heritability | QG 12; replicated genotypes, balanced ANOVA and observation-unit distinctions |
+| Narrow-sense heritability and fitted genetic evaluation | QG 3–5; an additive relationship model, BLUP and held-out phenotype prediction |
+| Selection response and programme design | QG 6–9 and QG 11; objectives, contributions, fixed bases and resources |
+| Prediction validation | QG 5 and QG 10; the latter uses a synthetic phenotype predictor, not a fitted breeding-value evaluation |
+
+### Topics needing additional worked practicals
+
+| Topic in the slides | Current limit | Suggested next exercise |
+|---|---|---|
+| [HWE testing](https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html#hardyweinberg-test-theory-and-example) | PG 2 computes model expectations and sampling examples, but does not run a formal test | Compare fitted expectations, degrees of freedom and small-count limitations; explain what rejection can and cannot identify |
+| [GWAS](../slides/introduction_quantitative_genetics.qmd#genome-wide-association-study-gwas) and [marker–QTL LD](../slides/introduction_quantitative_genetics.qmd#why-gwas-works-markerqtl-linkage-disequilibrium) | QG 2 studies one marker's effects; it does not qualify causal interpretation or genome-wide significance | A small association analysis with covariates, multiple testing and an explicit distinction between association and causation |
+
+For additional applications, the population-genetics slides discuss conservation, medicine, forensics and the molecular clock. PG 1–7 supply foundations for those topics, but do not provide dedicated applied practicals. Mutation–drift and mutation–selection balance also need their own worked synthesis if included in assessment.
+
+The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.
 
 ## Suggested teaching routes
 
 ### Foundations of genetic variation
 
-Read **PG 1 → PG 2 → PG 3 → PG 4**, then **QG 1 → QG 2**. Students move from allele coding and random-union expectations to sources of trait variation.
+Read **PG 1 → PG 2 → PG 3 → PG 4**, then **QG 1 → QG 2 → QG 12**. Students move from allele coding and random-union expectations to sources of trait variation.
 
 Checkpoint: explain why a heterozygosity deficit does not identify pedigree inbreeding, and why a locus's dominance effect and average allele-substitution effect are different quantities.
 
@@ -101,6 +128,7 @@ Checkpoint: define the objective, candidate eligibility, information schedule, p
 | QG 7–8 | `gsim`; hypothetical candidates and synthetic phased input |
 | QG 9 | Base R and the shared relationship helper; hypothetical pedigree; no downloads |
 | QG 10 | Base R; synthetic records and separate genetic truth |
+| QG 12 | Base R; synthetic replicated-genotype data; no downloads |
 | QG 11 | `gsim` and the relationship helper; small synthetic paired runs; no downloads |
 
 For QG 3–5, 9 and 11, retain the `tutorials/` and `scripts/` directory arrangement. The [helper script](../scripts/mouse_practical_helpers.R) supplies separate functions; loading it does not download data or fit a model until those functions are called. QG 9 and 11 use only its relationship recursion and do not require `qgg`.

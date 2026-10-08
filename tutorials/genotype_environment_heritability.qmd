@@ -1,0 +1,248 @@
+---
+title: "Genotype-by-environment interaction and heritability"
+subtitle: "Quantitative Genetics Practical 12: Replicated genotypes across environments"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Distinguish environmental shifts from genotype-by-environment interaction; interpret reaction norms; estimate variance components in a balanced replicated design; define broad-sense heritability for a genotype mean; and distinguish that target from narrow-sense heritability and offspring response.
+
+Read alongside the slides on [genotype-by-environment interaction](../slides/introduction_quantitative_genetics.qmd#genotype-environment-interaction) and [broad-sense heritability](../slides/introduction_quantitative_genetics.qmd#broad-sense-heritability-h2). This extension fits conceptually after [Practical 2](mouse_single_locus.qmd) and before the additive evaluation model in [Practical 3](mouse_genetic_parameters.qmd). It uses base R and explicitly synthetic data, with no downloads or extra package requirements.
+
+## 1. Environmental shifts and genotype responses
+
+A reaction norm describes how one genotype's expected phenotype changes with environment. Parallel lines can show an environmental effect without interaction. Nonparallel lines show that the genotype contrast changes; crossing lines additionally reverse rankings. Interaction does not require a crossover.
+
+These supplied means illustrate three patterns in arbitrary trait units. They are not observed trial data.
+
+```{r}
+#| label: reaction-norms
+patterns <- list(
+  Parallel=rbind(G1=c(6,7),G2=c(5,6)),
+  Nonparallel=rbind(G1=c(6,9),G2=c(5,6)),
+  Crossover=rbind(G1=c(7,5),G2=c(5,7)))
+for(k in seq_along(patterns)) colnames(patterns[[k]]) <- c("E1","E2")
+contrasts <- lapply(patterns,function(m) m["G1",]-m["G2",])
+stopifnot(identical(unname(contrasts$Parallel),c(1,1)),
+          identical(unname(contrasts$Nonparallel),c(1,3)),
+          identical(unname(contrasts$Crossover),c(2,-2)))
+```
+
+```{r}
+#| label: fig-reaction-norms
+#| fig-cap: "Parallel environmental responses, nonparallel responses without rank reversal, and a crossover interaction."
+#| fig-width: 10
+#| fig-height: 4
+local({
+  old <- par(mfrow=c(1,3)); on.exit(par(old))
+  for(label in names(patterns)) {
+    matplot(1:2,t(patterns[[label]]),type="b",pch=16:17,lty=1,
+            col=c("#247BA0","#D8A47F"),xaxt="n",xlab="Environment",
+            ylab="Expected trait value",main=label,ylim=c(4,10))
+    axis(1,at=1:2,labels=c("E1","E2"))
+    legend("topleft",c("G1","G2"),col=c("#247BA0","#D8A47F"),
+           pch=16:17,lty=1,bty="n")
+  }
+})
+```
+
+**Question 1.** Can an environment improve the mean trait value without changing genotype rankings?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Yes. In the parallel example, both genotypes increase by one unit and their contrast remains one. In the nonparallel example, the contrast changes but G1 remains higher. Ranking reverses only in the crossover example.
+:::
+
+## 2. Declare a replicated-genotype experiment
+
+Imagine eight clonally replicated genotypes, each tested in three environments with four independent experimental units per genotype/environment cell. Replicates are separate units, not repeated measurements of the same plant. There are no blocks, spatial trends, missing values or shared residual effects in this teaching design.
+
+For genotype $i$, environment $j$ and replicate $k$, use
+
+$$y_{ijk}=\mu+E_j+G_i+(GE)_{ij}+\epsilon_{ijk}.$$
+
+Environment means $E_j$ are fixed nuisance effects. Genotype effects have variance $\sigma_G^2$; independent genotype/environment deviations have variance $\sigma_{GE}^2$; independent unit residuals have variance $\sigma_\epsilon^2$. All random components have mean zero and are mutually independent. Environments are treated as exchangeable for interaction sampling around a target mean. This covariance model is a simplification of environments with heterogeneous variances or correlated genotype responses.
+
+The genotype component represents repeatable genetic differences between these complete genotypes. It is not automatically additive breeding value. Randomized allocation and absence of genotype-associated environmental confounding are essential to that interpretation.
+
+```{r}
+#| label: replicated-data
+set.seed(20261012)
+nG <- 8L; nEnv <- 3L; nRep <- 4L
+genotypes <- paste0("G",seq_len(nG))
+environments <- paste0("E",seq_len(nEnv))
+truth_variance <- c(G=4,GE=2,residual=1)
+g <- setNames(rnorm(nG,sd=sqrt(truth_variance["G"])),genotypes)
+ge <- matrix(rnorm(nG*nEnv,sd=sqrt(truth_variance["GE"])),nG,nEnv,
+             dimnames=list(genotypes,environments))
+environment_mean <- setNames(c(-3,0,3),environments)
+data <- expand.grid(genotype=genotypes,environment=environments,
+                    replicate=seq_len(nRep),stringsAsFactors=FALSE)
+data$genotype <- factor(data$genotype,levels=genotypes)
+data$environment <- factor(data$environment,levels=environments)
+cell <- cbind(match(data$genotype,genotypes),match(data$environment,environments))
+data$value <- 20+environment_mean[as.character(data$environment)]+
+  g[as.character(data$genotype)]+ge[cell]+rnorm(nrow(data),sd=1)
+stopifnot(nrow(data)==96,all(table(data$genotype,data$environment)==nRep))
+knitr::kable(head(data),digits=3,row.names=FALSE)
+```
+
+The generating variances describe the simulation model; sample variances of eight realized genotype effects need not equal them. The first reaction-norm examples were supplied contrasts, whereas this experiment uses independently generated random components.
+
+## 3. Inspect cell means and genotype contrasts
+
+```{r}
+#| label: fig-trial-means
+#| fig-cap: "Observed genotype means across environments in the synthetic replicated experiment. Apparent differences include sampling error."
+#| fig-width: 8
+#| fig-height: 5
+cell_mean <- with(data,tapply(value,list(genotype,environment),mean))
+matplot(seq_len(nEnv),t(cell_mean),type="b",pch=1:nG,lty=1,
+        col=hcl.colors(nG,"Dark 3"),xaxt="n",xlab="Environment",
+        ylab="Mean trait value")
+axis(1,at=seq_len(nEnv),labels=environments)
+legend("topleft",genotypes,col=hcl.colors(nG,"Dark 3"),pch=1:nG,
+       lty=1,ncol=2,bty="n",cex=.8)
+```
+
+An environmental mean shift affects all genotypes. Interaction describes departures from a common shift. A plot of noisy cell means alone does not distinguish interaction variance from residual noise; replication supplies that separation.
+
+## 4. Estimate variance components from mean squares
+
+For this balanced independent-unit model, expected mean squares are
+
+$$E(MS_\epsilon)=\sigma_\epsilon^2,$$
+$$E(MS_{GE})=\sigma_\epsilon^2+n_{\mathrm{rep}}\sigma_{GE}^2,$$
+$$E(MS_G)=\sigma_\epsilon^2+n_{\mathrm{rep}}\sigma_{GE}^2+
+ n_{\mathrm{env}}n_{\mathrm{rep}}\sigma_G^2.$$
+
+Solve these equations to obtain method-of-moments estimates. The ANOVA decomposition supplies mean squares; we do not interpret its default fixed-effect genotype test as a random-component test. A random-genotype test would use the interaction mean square as its denominator under this design.
+
+```{r}
+#| label: anova-components
+fit <- aov(value~genotype*environment,data=data)
+anova_table <- anova(fit)
+knitr::kable(anova_table[,c("Df","Sum Sq","Mean Sq")],digits=3)
+MS_G <- anova_table["genotype","Mean Sq"]
+MS_GE <- anova_table["genotype:environment","Mean Sq"]
+MS_error <- anova_table["Residuals","Mean Sq"]
+estimates <- c(G=(MS_G-MS_GE)/(nEnv*nRep),
+               GE=(MS_GE-MS_error)/nRep,residual=MS_error)
+knitr::kable(data.frame(component=names(estimates),
+  generating_variance=unname(truth_variance),estimated_variance=unname(estimates)),
+  digits=3,row.names=FALSE)
+# Independently reconstruct sums of squares from balanced means.
+genotype_mean <- rowMeans(cell_mean)
+env_mean <- colMeans(cell_mean)
+grand <- mean(cell_mean)
+interaction_mean <- sweep(sweep(cell_mean,1,genotype_mean,"-"),2,env_mean,"-")+grand
+SSE <- sum((data$value-cell_mean[cell])^2)
+stopifnot(abs(MS_G-nEnv*nRep*sum((genotype_mean-grand)^2)/(nG-1))<1e-10,
+  abs(MS_GE-nRep*sum(interaction_mean^2)/((nG-1)*(nEnv-1)))<1e-10,
+  abs(MS_error-SSE/(nG*nEnv*(nRep-1)))<1e-10)
+```
+
+In a different sample, a difference of mean squares can be negative. Report that sampling outcome rather than silently clipping it and calling it an unconstrained estimate. Constrained mixed-model estimation is a separate approach. These simple formulas do not apply unchanged to missing cells, unequal replication, blocks or correlated residuals.
+
+## 5. Define heritability for the observation unit
+
+The target is a genotype's main genetic effect across the declared environment population. The observation used to compare genotypes is its mean across $n_{\mathrm{env}}$ environments and $n_{\mathrm{rep}}$ units per environment. After common environment effects are accounted for, interaction and residual terms average differently:
+
+$$H^2_{\mathrm{mean}}=
+\frac{\sigma_G^2}{\sigma_G^2+
+ \sigma_{GE}^2/n_{\mathrm{env}}+
+ \sigma_\epsilon^2/(n_{\mathrm{env}}n_{\mathrm{rep}})}.$$
+
+This balanced entry-mean definition requires the declared covariance and sampling model; see [Piepho and Möhring (2007)](https://pmc.ncbi.nlm.nih.gov/articles/PMC2147938/) for its distinction from unbalanced-trial measures. An entry mean and an individual phenotype are different observation units, so they need different variance denominators.
+
+```{r}
+#| label: mean-heritability
+H_mean <- function(variance,environments,replicates) {
+  variance["G"]/(variance["G"]+variance["GE"]/environments+
+    variance["residual"]/(environments*replicates))
+}
+H_model <- H_mean(truth_variance,nEnv,nRep)
+# This particular seeded sample must yield nonnegative components for the ratio.
+stopifnot(all(estimates>=0))
+H_estimated <- H_mean(estimates,nEnv,nRep)
+c(model_H2_mean=unname(H_model),estimated_H2_mean=unname(H_estimated))
+# For the balanced moment estimates, the ratio simplifies algebraically.
+stopifnot(abs(H_estimated-(1-MS_GE/MS_G))<1e-12)
+```
+
+Environment main effects are common to all entries in each environment. They do not contribute to contrasts between entry means in this fully crossed design. Pooling all 96 observations and dividing genotype variance by their raw variance would include environment shifts and answer a different question.
+
+### More units versus more environments
+
+```{r}
+#| label: design-comparison
+designs <- data.frame(environments=c(3,3,6),replicates=c(4,8,4))
+designs$units_per_genotype <- with(designs,environments*replicates)
+designs$model_H2_mean <- mapply(function(e,r) H_mean(truth_variance,e,r),
+                              designs$environments,designs$replicates)
+stopifnot(designs$model_H2_mean[2]>designs$model_H2_mean[1],
+          designs$model_H2_mean[3]>designs$model_H2_mean[2])
+knitr::kable(designs,digits=3,row.names=FALSE)
+```
+
+The last two designs both use 24 units per genotype. Under this independent-interaction model, more environments average interaction variance as well as residual noise. More within-environment replicates reduce residual noise but not that environment's interaction. Real environmental correlation, costs and representativeness can change this comparison.
+
+**Question 2.** Does adding environments always improve a genotype-mean evaluation?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+The displayed formula predicts improvement under independent exchangeable interactions and the same target. Correlated environments give less independent information. Environments outside the deployment target can change what is being estimated. Their number alone does not establish relevance or justify the independent-interaction formula.
+:::
+
+## 6. Broad-sense genetic differences are not additive breeding values
+
+Complete genotypes can differ through additive, dominance and epistatic effects. This replicated-genotype design estimates repeatable genetic variation without partitioning those sources. Under an appropriate orthogonal variance decomposition, broad-sense heritability includes all genetic components; narrow-sense heritability includes only additive variance. See [Practical 3](mouse_genetic_parameters.qmd) for an explicitly additive relationship model.
+
+For a separate hypothetical single-environment population, compare two architectures with the same total genetic variance of four and residual variance of two. Assume a decomposition with no covariance among components.
+
+```{r}
+#| label: broad-versus-narrow
+architecture <- data.frame(model=c("Mixed genetic components","All additive"),
+                          VA=c(2,4),VD=c(1,0),VI=c(1,0),VE=2)
+architecture$VG <- with(architecture,VA+VD+VI)
+architecture$H2 <- with(architecture,VG/(VG+VE))
+architecture$h2 <- with(architecture,VA/(VG+VE))
+stopifnot(all(architecture$H2==2/3),
+          max(abs(architecture$h2-c(1/3,2/3)))<1e-12)
+knitr::kable(architecture,digits=3,row.names=FALSE)
+```
+
+These are declared component values, not components estimated by our trial. Equal broad-sense heritability does not imply equal additive inheritance or response to sexual selection. Replicating a complete genotype preserves combinations that sexual reproduction can break up. Heritability also refers to a population, environment model and observation unit, not the genetic fraction of one individual's phenotype.
+
+## Exercises
+
+1. Add a different constant to every observation in each environment. Verify genotype and interaction mean squares stay unchanged in this balanced design.
+2. Set interaction variance to zero in the design comparison. Explain why the two 24-unit designs then have equal model heritability.
+3. If there is only one observation per genotype/environment cell, can this ANOVA separate interaction and unit residual variance?
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+shifted <- data
+shift <- setNames(c(2,-4,8),environments)
+shifted$value <- shifted$value+shift[as.character(shifted$environment)]
+shift_table <- anova(aov(value~genotype*environment,data=shifted))
+stopifnot(abs(shift_table["genotype","Mean Sq"]-MS_G)<1e-10,
+          abs(shift_table["genotype:environment","Mean Sq"]-MS_GE)<1e-10)
+no_interaction <- truth_variance; no_interaction["GE"] <- 0
+stopifnot(abs(H_mean(no_interaction,3,8)-H_mean(no_interaction,6,4))<1e-12)
+```
+With one observation per cell, the full interaction model has no residual degrees of freedom. Additional assumptions or a different design are needed to separate interaction from unit error. Treating the combined term as pure interaction would overstate what the design identifies.
+:::
+
+## Package connection and next topic
+
+This balanced ANOVA is a teaching calculation. Fitted genetic or genotype/environment models belong to estimation tools; `gsim` owns biological simulation and records, `gsel` owns objectives and programme design, and `gpop` owns population summaries. No package interfaces are added here.
+
+Return to the [course map](course_map.qmd). The next gaps are formal HWE testing and a worked association analysis that separates significance, multiple testing and causal interpretation.

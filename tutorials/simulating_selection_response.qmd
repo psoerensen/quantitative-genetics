@@ -251,4 +251,4 @@ With fixed effects, changing fixed centers adds the same constant to every indiv
 
 `gsim` supplies inheritance, persistent genetic values and observable records through its existing [breeding building blocks](https://github.com/psoerensen/gsim/blob/main/docs/design/breeding_building_blocks.md). `gsel` owns programme policies and objectives; `gpop` owns population summaries and their assumptions. No package interfaces are added here.
 
-Continue with [Practical 9: Relationships, mating and inbreeding](relationships_mating_inbreeding.qmd), then introduce an externally fitted genetic evaluation in place of the phenotype score. Keep simulated truth reserved for evaluation and retain the same reporting base.
+Continue with [Practical 9: Relationships, mating and inbreeding](relationships_mating_inbreeding.qmd), then examine prediction targets and validation in [Practical 10](validating_selection_predictions.qmd). An externally fitted genetic evaluation would be a further extension of this simulation. Keep simulated truth reserved for evaluation and retain the same reporting base.

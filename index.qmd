@@ -51,6 +51,8 @@ Start with the [course map](tutorials/course_map.qmd) for prerequisites, R requi
 
 - [Practical 11: Comparing breeding programmes](tutorials/comparing_breeding_programmes.qmd) — a capstone on recording policies, paired outcomes, gain, diversity and costs.
 
+- [Practical 12: Genotype-by-environment interaction and heritability](tutorials/genotype_environment_heritability.qmd) — reaction norms, replicated trials and broad-sense entry-mean heritability.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).

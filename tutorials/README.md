@@ -21,6 +21,8 @@ See the [course map](course_map.qmd) for prerequisites and routes through both c
 
 - [Comparing breeding programmes](comparing_breeding_programmes.qmd): Practical 11, a small paired gsim comparison of recording policies with fixed bases and explicit resources.
 
+- [Genotype-by-environment interaction and heritability](genotype_environment_heritability.qmd): Practical 12, a base-R extension using a balanced synthetic replicated-genotype experiment.
+
 Practicals 3–5 require qgg and the shared script in scripts/mouse_practical_helpers.R.
 
 Render an individual page from the repository root, for example:

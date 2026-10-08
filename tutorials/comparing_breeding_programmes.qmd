@@ -282,4 +282,4 @@ Then explain which conclusion your results support and which assumptions remain 
 
 `gsel` owns objectives and programme policies; `gsim` supplies existing [records, selection, mating and inheritance](https://github.com/psoerensen/gsim/blob/main/docs/design/breeding_building_blocks.md); `gpop` owns population-statistic definitions and their assumptions. Estimation tools fit genetic evaluations. This capstone composes those responsibilities without adding package interfaces.
 
-The next teaching step is a course map connecting the population-genetics and quantitative-genetics practicals, with prerequisites and entry points for students and instructors.
+Use the [course map](course_map.qmd) to connect both practical sequences, choose a teaching route and identify slide topics that need further worked examples.

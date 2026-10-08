@@ -15,6 +15,7 @@ project:
     - tutorials/relationships_mating_inbreeding.qmd
     - tutorials/validating_selection_predictions.qmd
     - tutorials/comparing_breeding_programmes.qmd
+    - tutorials/genotype_environment_heritability.qmd
     - slides/introduction_quantitative_genetics.qmd
     - slides/introduction_quantitative_genetics_narrated.qmd
   resources:
@@ -58,6 +59,8 @@ website:
             href: tutorials/validating_selection_predictions.html
           - text: "11. Comparing breeding programmes"
             href: tutorials/comparing_breeding_programmes.html
+          - text: "12. Genotype by environment and heritability"
+            href: tutorials/genotype_environment_heritability.html
       - text: "qgteach"
         href: https://psoerensen.github.io/qgteach/
 

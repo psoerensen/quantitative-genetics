@@ -156,6 +156,10 @@ ul.task-list li input[type="checkbox"] {
     <a class="dropdown-item" href="../tutorials/comparing_breeding_programmes.html">
  <span class="dropdown-text">11. Comparing breeding programmes</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../tutorials/genotype_environment_heritability.html">
+ <span class="dropdown-text">12. Genotype by environment and heritability</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item">
@@ -181,6 +185,10 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#choose-an-entry-point" id="toc-choose-an-entry-point" class="nav-link active" data-scroll-target="#choose-an-entry-point">Choose an entry point</a></li>
   <li><a href="#population-genetics-sequence" id="toc-population-genetics-sequence" class="nav-link" data-scroll-target="#population-genetics-sequence">Population-genetics sequence</a></li>
   <li><a href="#quantitative-genetics-sequence" id="toc-quantitative-genetics-sequence" class="nav-link" data-scroll-target="#quantitative-genetics-sequence">Quantitative-genetics sequence</a></li>
+  <li><a href="#coverage-alongside-the-slides" id="toc-coverage-alongside-the-slides" class="nav-link" data-scroll-target="#coverage-alongside-the-slides">Coverage alongside the slides</a>
+  <ul class="collapse">
+  <li><a href="#topics-needing-additional-worked-practicals" id="toc-topics-needing-additional-worked-practicals" class="nav-link" data-scroll-target="#topics-needing-additional-worked-practicals">Topics needing additional worked practicals</a></li>
+  </ul></li>
   <li><a href="#suggested-teaching-routes" id="toc-suggested-teaching-routes" class="nav-link" data-scroll-target="#suggested-teaching-routes">Suggested teaching routes</a>
   <ul class="collapse">
   <li><a href="#foundations-of-genetic-variation" id="toc-foundations-of-genetic-variation" class="nav-link" data-scroll-target="#foundations-of-genetic-variation">Foundations of genetic variation</a></li>
@@ -362,15 +370,96 @@ ul.task-list li input[type="checkbox"] {
 <td>How do recording policies affect gain, diversity and resource use?</td>
 <td>QG 6–10; PG 4 and PG 6</td>
 </tr>
+<tr class="even">
+<td><a href="../tutorials/genotype_environment_heritability.html">QG 12: Genotype by environment and heritability</a></td>
+<td>How does replication across environments define genetic variance and entry-mean heritability?</td>
+<td>QG 2; variance and ANOVA; fits before QG 3 in the slide flow</td>
+</tr>
 </tbody>
 </table>
 <p>Use the <a href="../slides/introduction_quantitative_genetics.html">quantitative-genetics slides</a> to connect trait variation, gene action, covariance, heritability and response to selection. Reading a predecessor can provide conceptual preparation without running its full code.</p>
+</section>
+<section id="coverage-alongside-the-slides" class="level2">
+<h2 class="anchored" data-anchor-id="coverage-alongside-the-slides">Coverage alongside the slides</h2>
+<p>The practicals cover the central flow, but some slide topics currently have explanation without a matching worked practical. Use this distinction when choosing exercises or assessing students.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Slide theme</th>
+<th>Current practical coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Genotype data, allele frequencies and HWE expectations</td>
+<td>PG 1–2; worked counts and expectations, without a formal HWE test</td>
+</tr>
+<tr class="even">
+<td>Mating, population structure and identity by descent</td>
+<td>PG 3; QG 7 and QG 9 connect parentage to breeding decisions</td>
+</tr>
+<tr class="odd">
+<td>Diversity, mutation, migration, LD, drift and selection</td>
+<td>PG 4–7; finite realizations and model assumptions are explicit</td>
+</tr>
+<tr class="even">
+<td>Quantitative variation, covariance and single-locus gene action</td>
+<td>QG 1–2; worked mouse analysis and hypothetical checks</td>
+</tr>
+<tr class="odd">
+<td>Genotype-by-environment interaction and broad-sense entry-mean heritability</td>
+<td>QG 12; replicated genotypes, balanced ANOVA and observation-unit distinctions</td>
+</tr>
+<tr class="even">
+<td>Narrow-sense heritability and fitted genetic evaluation</td>
+<td>QG 3–5; an additive relationship model, BLUP and held-out phenotype prediction</td>
+</tr>
+<tr class="odd">
+<td>Selection response and programme design</td>
+<td>QG 6–9 and QG 11; objectives, contributions, fixed bases and resources</td>
+</tr>
+<tr class="even">
+<td>Prediction validation</td>
+<td>QG 5 and QG 10; the latter uses a synthetic phenotype predictor, not a fitted breeding-value evaluation</td>
+</tr>
+</tbody>
+</table>
+<section id="topics-needing-additional-worked-practicals" class="level3">
+<h3 class="anchored" data-anchor-id="topics-needing-additional-worked-practicals">Topics needing additional worked practicals</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Topic in the slides</th>
+<th>Current limit</th>
+<th>Suggested next exercise</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html#hardyweinberg-test-theory-and-example">HWE testing</a></td>
+<td>PG 2 computes model expectations and sampling examples, but does not run a formal test</td>
+<td>Compare fitted expectations, degrees of freedom and small-count limitations; explain what rejection can and cannot identify</td>
+</tr>
+<tr class="even">
+<td><a href="../slides/introduction_quantitative_genetics.html#genome-wide-association-study-gwas">GWAS</a> and <a href="../slides/introduction_quantitative_genetics.html#why-gwas-works-markerqtl-linkage-disequilibrium">marker–QTL LD</a></td>
+<td>QG 2 studies one marker’s effects; it does not qualify causal interpretation or genome-wide significance</td>
+<td>A small association analysis with covariates, multiple testing and an explicit distinction between association and causation</td>
+</tr>
+</tbody>
+</table>
+<p>For additional applications, the population-genetics slides discuss conservation, medicine, forensics and the molecular clock. PG 1–7 supply foundations for those topics, but do not provide dedicated applied practicals. Mutation–drift and mutation–selection balance also need their own worked synthesis if included in assessment.</p>
+<p>The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.</p>
+</section>
 </section>
 <section id="suggested-teaching-routes" class="level2">
 <h2 class="anchored" data-anchor-id="suggested-teaching-routes">Suggested teaching routes</h2>
 <section id="foundations-of-genetic-variation" class="level3">
 <h3 class="anchored" data-anchor-id="foundations-of-genetic-variation">Foundations of genetic variation</h3>
-<p>Read <strong>PG 1 → PG 2 → PG 3 → PG 4</strong>, then <strong>QG 1 → QG 2</strong>. Students move from allele coding and random-union expectations to sources of trait variation.</p>
+<p>Read <strong>PG 1 → PG 2 → PG 3 → PG 4</strong>, then <strong>QG 1 → QG 2 → QG 12</strong>. Students move from allele coding and random-union expectations to sources of trait variation.</p>
 <p>Checkpoint: explain why a heterozygosity deficit does not identify pedigree inbreeding, and why a locus’s dominance effect and average allele-substitution effect are different quantities.</p>
 </section>
 <section id="genetic-evaluation-and-validation" class="level3">
@@ -432,6 +521,10 @@ ul.task-list li input[type="checkbox"] {
 <td>Base R; synthetic records and separate genetic truth</td>
 </tr>
 <tr class="even">
+<td>QG 12</td>
+<td>Base R; synthetic replicated-genotype data; no downloads</td>
+</tr>
+<tr class="odd">
 <td>QG 11</td>
 <td><code>gsim</code> and the relationship helper; small synthetic paired runs; no downloads</td>
 </tr>
