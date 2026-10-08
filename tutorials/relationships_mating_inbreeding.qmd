@@ -212,4 +212,4 @@ W1 and W2 are full siblings from related parents; their additive relationship is
 
 `gsel` owns mating policies and contribution decisions. `gsim` can validate supplied parentage and simulate transmission from an explicit plan using its [existing breeding interfaces](https://github.com/psoerensen/gsim/blob/main/docs/design/breeding_building_blocks.md). Random mating in `gsim_mate()` does not avoid relatives automatically. The dense relationship calculation here is a small teaching calculation, not a new `gsim` relationship estimator or a scalable allocation solver.
 
-Next evaluate predictions and selection decisions using independent validation, with particular attention to related animals, information available at selection and the distinction between phenotype prediction and breeding-value accuracy.
+Continue with [Practical 10: Validating predictions and selection decisions](validating_selection_predictions.qmd), with particular attention to related animals, information available at selection and the distinction between phenotype prediction and breeding-value accuracy.

@@ -45,6 +45,8 @@ After completing the course, students should be able to:
 
 - [Practical 9: Relationships, mating and inbreeding](tutorials/relationships_mating_inbreeding.qmd) — parental kinship, equal contributions and offspring inbreeding.
 
+- [Practical 10: Validating predictions and selection decisions](tutorials/validating_selection_predictions.qmd) — family splits, training-only fitting, calibration and shortlist outcomes.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).

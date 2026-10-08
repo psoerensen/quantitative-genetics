@@ -12,6 +12,7 @@ project:
     - tutorials/selection_mating_plans.qmd
     - tutorials/simulating_selection_response.qmd
     - tutorials/relationships_mating_inbreeding.qmd
+    - tutorials/validating_selection_predictions.qmd
     - slides/introduction_quantitative_genetics.qmd
     - slides/introduction_quantitative_genetics_narrated.qmd
   resources:
@@ -49,6 +50,8 @@ website:
             href: tutorials/simulating_selection_response.html
           - text: "9. Relationships, mating and inbreeding"
             href: tutorials/relationships_mating_inbreeding.html
+          - text: "10. Validating predictions and decisions"
+            href: tutorials/validating_selection_predictions.html
       - text: "qgteach"
         href: https://psoerensen.github.io/qgteach/
 

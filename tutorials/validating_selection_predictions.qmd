@@ -1,0 +1,237 @@
+---
+title: "Validating predictions and selection decisions"
+subtitle: "Quantitative Genetics Practical 10: Targets, relatives and information at selection"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Define a validation target and deployment population; distinguish validation with represented families from validation in withheld families; fit preprocessing on training observations; assess association and calibration separately; and evaluate a selected shortlist without treating phenotype prediction as breeding-value accuracy.
+
+Continue from [Practical 9](relationships_mating_inbreeding.qmd) and the real-data phenotype validation in [Practical 5](mouse_genomic_breeding_values.qmd). This practical uses a small hypothetical dataset with known simulation truth and base R. It is an illustration of validation design, not a qualification of a genetic evaluation method.
+
+## 1. State the prediction question first
+
+A breeding evaluation aims to predict additive genetic merit. A phenotype includes genetic and environmental contributions. Prediction performance therefore depends on the target, the population and which information will be available when selecting animals.
+
+For this lesson, fit a **phenotype predictor** using a marker-derived covariate and family labels. We deliberately simulate both genetic and shared environmental family effects. A fitted family coefficient can absorb both; it is not automatically a family breeding value.
+
+We compare two predeclared splits of equal size:
+
+| Split | Training | Validation | Question |
+|---|---|---|---|
+| Represented families | Six animals per family | Two other animals per family | Prediction for additional animals from these families |
+| Withheld families | All animals in families 3–8 | All animals in families 1–2 | Prediction in families without training phenotypes |
+
+The represented-family split can be appropriate when deployment includes relatives with earlier records. It does not establish performance in new families. A family-label split also does not guarantee unrelatedness in a real pedigree; connected ancestry needs explicit inspection.
+
+## 2. Generate phenotypes and retain truth separately
+
+For animal $i$ in family $f$, define
+
+$$u_i=0.6z_i+g_f,\qquad y_i=u_i+c_f+e_i.$$
+
+Here $z_i$ is an observed marker-derived covariate, $g_f$ is an additive genetic family component, $c_f$ is a shared environmental component and $e_i$ is individual noise. Components are independent in this synthetic model. Values are in arbitrary trait units. This is a statistical teaching model, not a simulation of phased inheritance.
+
+```{r}
+#| label: simulated-records
+set.seed(20261010)
+families <- paste0("family",1:8)
+f <- rep(families,each=8)
+z <- rnorm(64)
+family_genetic <- setNames(rnorm(8,sd=.7),families)
+family_environment <- setNames(rnorm(8,sd=.8),families)
+u <- .6*z+family_genetic[f]
+y <- u+family_environment[f]+rnorm(64,sd=.5)
+observed <- data.frame(animal=sprintf("animal%02d",1:64),family=f,
+                       within_family=rep(1:8,8),marker_covariate=z,phenotype=y)
+truth <- setNames(unname(u),observed$animal)
+stopifnot(!anyDuplicated(observed$animal),!anyNA(observed))
+knitr::kable(head(observed),digits=3,row.names=FALSE)
+```
+
+Truth is reserved for evaluating decisions after fitting and prediction. In real data, true breeding values are unavailable. The model includes family covariance but does not implement pedigree Mendelian sampling or genotype-based inheritance as in Practical 8.
+
+## 3. Fit only on information in the training set
+
+Use ridge regression with an intercept, standardized marker covariate and family indicator columns. The penalty is fixed at 1 before looking at validation outcomes. The intercept is unpenalized; the marker and family coefficients are penalized. This is a compact phenotype-prediction model, not REML or a genomic breeding-value estimator.
+
+Training data determine the marker center and scale. Known family identities define columns without using outcomes. A family absent from training has a zero fitted coefficient under this model, so its predictions use the intercept and marker term.
+
+```{r}
+#| label: training-only-predictor
+fit_predict <- function(train,test,lambda=1) {
+  center <- mean(train$marker_covariate)
+  scale <- sd(train$marker_covariate)
+  stopifnot(is.finite(scale),scale>0,lambda>0)
+  make_design <- function(data) {
+    family_columns <- outer(data$family,families,"==")*1
+    colnames(family_columns) <- families
+    cbind(intercept=1,marker=(data$marker_covariate-center)/scale,
+          family_columns)
+  }
+  Xt <- make_design(train); Xv <- make_design(test)
+  penalty <- diag(c(0,rep(lambda,ncol(Xt)-1)))
+  coefficient <- solve(crossprod(Xt)+penalty,crossprod(Xt,train$phenotype))
+  prediction <- drop(Xv %*% coefficient)
+  names(prediction) <- test$animal
+  list(prediction=prediction,coefficient=coefficient,
+       preprocessing=c(center=center,scale=scale))
+}
+splits <- list(
+  Represented=observed$within_family<=6,
+  Withheld=!observed$family %in% families[1:2])
+fits <- lapply(splits,function(training)
+  fit_predict(observed[training,],observed[!training,]))
+stopifnot(all(vapply(splits,sum,integer(1))==48))
+knitr::kable(do.call(rbind,lapply(names(splits),function(label) {
+  training <- splits[[label]]
+  data.frame(split=label,training=sum(training),validation=sum(!training),
+    validation_families=length(unique(observed$family[!training])),
+    shared_families=length(intersect(unique(observed$family[training]),
+                                     unique(observed$family[!training]))))
+})),row.names=FALSE)
+```
+
+**Question 1.** Is withholding phenotypes sufficient if marker filtering, imputation or tuning used the full dataset?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+It depends on the intended information available at deployment. Any step using validation outcomes leaks the target. Preprocessing and tuning should follow the declared deployment design; here marker scaling uses training data only and the penalty is fixed beforehand. A supplied real-data imputation procedure still needs its own information audit. Practical 5 explicitly retains that limitation for the provided mouse genotypes.
+:::
+
+### Check the boundary between training and validation
+
+Change validation phenotypes while leaving training data unchanged. Predictions must stay the same. This small check verifies the fitting function's information boundary; it does not certify every upstream data-processing step.
+
+```{r}
+#| label: validation-boundary
+training <- splits$Represented
+test_changed <- observed[!training,]
+test_changed$phenotype <- test_changed$phenotype+100
+unchanged <- fit_predict(observed[training,],test_changed)$prediction
+stopifnot(identical(unchanged,fits$Represented$prediction))
+# Animals from withheld families receive no estimated family effect.
+absent <- families[1:2]
+stopifnot(all(fits$Withheld$coefficient[absent,1]==0))
+```
+
+## 4. Report association, error and calibration
+
+For validation phenotypes, report correlation, root mean squared error in trait units, mean error (prediction minus observation), and the intercept/slope of the diagnostic regression $y=\alpha+\beta\widehat y+\epsilon$.
+
+Ideal calibration would give intercept zero and slope one in the appropriate population. Correlation can remain unchanged under a positive rescaling or constant shift. Calibration diagnostics on 16 records are descriptive and uncertain.
+
+```{r}
+#| label: validation-metrics
+metrics <- function(y,prediction) {
+  calibration <- lm(y~prediction)
+  c(correlation=cor(y,prediction),RMSE=sqrt(mean((prediction-y)^2)),
+    mean_error=mean(prediction-y),intercept=unname(coef(calibration)[1]),
+    slope=unname(coef(calibration)[2]))
+}
+results <- do.call(rbind,lapply(names(splits),function(label) {
+  training <- splits[[label]]
+  test <- observed[!training,]
+  prediction <- fits[[label]]$prediction[test$animal]
+  baseline <- rep(mean(observed$phenotype[training]),nrow(test))
+  data.frame(split=label,t(metrics(test$phenotype,prediction)),
+    baseline_RMSE=sqrt(mean((baseline-test$phenotype)^2)),
+    score_truth_correlation=cor(prediction,truth[test$animal]))
+}))
+knitr::kable(results,digits=3,row.names=FALSE)
+```
+
+The last column uses known synthetic genetic truth. It describes the correlation of this **phenotype-prediction score** with genetic merit. It does not convert the score into a calibrated breeding-value prediction. In real data, validation phenotype correlation cannot generally be called breeding-value accuracy; shared environment, fixed effects and relatedness matter.
+
+The two splits use different validation animals and family targets. Their numerical difference cannot be attributed solely to removing relatives. A population-level comparison would require a planned replicated validation design. The withheld split contains only two independent synthetic families, so treating all 16 records as independent validation units would misrepresent uncertainty.
+
+```{r}
+#| label: fig-validation
+#| fig-cap: "Phenotype predictions under two declared validation targets. The dashed line denotes equal predicted and observed values."
+#| fig-width: 10
+#| fig-height: 5
+local({
+  old <- par(mfrow=c(1,2)); on.exit(par(old))
+  for(label in names(splits)) {
+    test <- observed[!splits[[label]],]
+    prediction <- fits[[label]]$prediction[test$animal]
+    limits <- range(prediction,test$phenotype)
+    plot(prediction,test$phenotype,xlim=limits,ylim=limits,pch=16,
+         col="#247BA0",main=paste(label,"families"),
+         xlab="Predicted phenotype",ylab="Observed phenotype")
+    abline(0,1,lty=2)
+  }
+})
+```
+
+## 5. Evaluate a selected shortlist separately
+
+Within each validation pool, select four eligible candidates by the phenotype-prediction score. For this demonstration the pool represents one parental role, with equal intended contributions. Use IDs to break ties. Compare the shortlist's mean true genetic merit with the whole pool and with an explicitly labelled oracle shortlist using truth.
+
+```{r}
+#| label: shortlist-evaluation
+shortlists <- do.call(rbind,lapply(names(splits),function(label) {
+  test <- observed[!splits[[label]],]
+  prediction <- fits[[label]]$prediction[test$animal]
+  true_u <- truth[test$animal]
+  selected <- order(-prediction,test$animal,method="radix")[1:4]
+  oracle <- order(-true_u,test$animal,method="radix")[1:4]
+  selected_mean <- mean(true_u[selected])
+  oracle_mean <- mean(true_u[oracle])
+  stopifnot(oracle_mean>=selected_mean-1e-12)
+  data.frame(split=label,selected=4,pool_mean_truth=mean(true_u),
+    selected_mean_truth=selected_mean,
+    selected_difference=selected_mean-mean(true_u),
+    oracle_mean_truth=oracle_mean,oracle_gap=oracle_mean-selected_mean,
+    oracle_overlap=length(intersect(test$animal[selected],test$animal[oracle])))
+}))
+knitr::kable(shortlists,digits=3,row.names=FALSE)
+```
+
+The oracle gap measures how far the selected mean falls below the best attainable mean in this same candidate pool under the unconstrained top-four rule. It uses information unavailable in real selection. It is not a comparison with an implementable alternative policy.
+
+These are selected-parent differences, not offspring gain per year. Offspring response additionally depends on both parental roles, contributions, mating, inheritance and the reporting base, as shown in Practicals 7–9. High overall correlation need not produce the best shortlist, because errors near the selection threshold matter.
+
+**Question 2.** Why can phenotype prediction reward family environmental effects?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Shared family environment helps predict additional phenotypes from that same environment. It is not inherited additive merit. The family predictor can therefore improve phenotype association while ranking genetic merit imperfectly. Genetic evaluations need a model and data that distinguish genetic and environmental sources, with validation matched to their use.
+:::
+
+## Exercises
+
+1. Add 2 to all validation predictions. Verify correlation and ranking stay unchanged, while error and calibration change.
+2. Multiply predictions by 2. Verify correlation and ranking stay unchanged and the calibration slope is halved.
+3. Describe a future-generation validation design when relatives may occur in training. What information must be dated?
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+test <- observed[!splits$Represented,]
+prediction <- fits$Represented$prediction[test$animal]
+m0 <- metrics(test$phenotype,prediction)
+mshift <- metrics(test$phenotype,prediction+2)
+mscale <- metrics(test$phenotype,2*prediction)
+stopifnot(abs(mshift["correlation"]-m0["correlation"])<1e-12,
+  abs(mscale["correlation"]-m0["correlation"])<1e-12,
+  abs(mscale["slope"]-m0["slope"]/2)<1e-12,
+  abs(mshift["mean_error"]-m0["mean_error"]-2)<1e-12,
+  identical(order(-prediction),order(-(prediction+2))),
+  identical(order(-prediction),order(-2*prediction)))
+knitr::kable(rbind(Original=m0,Shifted=mshift,Scaled=mscale),digits=3)
+```
+Freeze training records at the intended selection date and evaluate a later cohort. Preserve only phenotypes, genotypes, pedigree links and external information available by that date. Tune models within earlier training data. Related training animals may be appropriate if deployment genuinely includes them; report their connection rather than treating a chronological split as unrelated validation. Later progeny records may help assess evaluation performance, but the prediction being assessed must retain its original information date.
+:::
+
+## Package connection and next topic
+
+Estimation tools own fitted genetic evaluations. `gsim` can provide observable records and separate known genetic truth for simulation experiments. `gsel` consumes predictions for programme decisions; `gpop` supplies population summaries. This lesson adds no package prediction or validation API.
+
+Next bring these pieces together in a breeding-programme comparison: declare the objective, information schedule, selection and mating rules, then evaluate gain, diversity and resources on a fixed base. A comparison needs replicated outcomes before drawing conclusions about expected policy performance.

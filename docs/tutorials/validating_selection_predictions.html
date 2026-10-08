@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Relationships, mating and inbreeding – Quantitative Genetics</title>
+<title>Validating predictions and selection decisions – Quantitative Genetics</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -4072,14 +4072,14 @@ window.Quarto = {
    
   <ul>
   <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link active" data-scroll-target="#learning-objectives">Learning objectives</a></li>
-  <li><a href="#define-the-ancestry-and-founder-base" id="toc-define-the-ancestry-and-founder-base" class="nav-link" data-scroll-target="#define-the-ancestry-and-founder-base">1. Define the ancestry and founder base</a></li>
-  <li><a href="#from-parental-kinship-to-offspring-inbreeding" id="toc-from-parental-kinship-to-offspring-inbreeding" class="nav-link" data-scroll-target="#from-parental-kinship-to-offspring-inbreeding">2. From parental kinship to offspring inbreeding</a>
+  <li><a href="#state-the-prediction-question-first" id="toc-state-the-prediction-question-first" class="nav-link" data-scroll-target="#state-the-prediction-question-first">1. State the prediction question first</a></li>
+  <li><a href="#generate-phenotypes-and-retain-truth-separately" id="toc-generate-phenotypes-and-retain-truth-separately" class="nav-link" data-scroll-target="#generate-phenotypes-and-retain-truth-separately">2. Generate phenotypes and retain truth separately</a></li>
+  <li><a href="#fit-only-on-information-in-the-training-set" id="toc-fit-only-on-information-in-the-training-set" class="nav-link" data-scroll-target="#fit-only-on-information-in-the-training-set">3. Fit only on information in the training set</a>
   <ul class="collapse">
-  <li><a href="#a-founder-copy-check" id="toc-a-founder-copy-check" class="nav-link" data-scroll-target="#a-founder-copy-check">A founder-copy check</a></li>
+  <li><a href="#check-the-boundary-between-training-and-validation" id="toc-check-the-boundary-between-training-and-validation" class="nav-link" data-scroll-target="#check-the-boundary-between-training-and-validation">Check the boundary between training and validation</a></li>
   </ul></li>
-  <li><a href="#hold-contributions-fixed-and-change-pairings" id="toc-hold-contributions-fixed-and-change-pairings" class="nav-link" data-scroll-target="#hold-contributions-fixed-and-change-pairings">3. Hold contributions fixed and change pairings</a></li>
-  <li><a href="#verify-offspring-diagonals-through-the-recursion" id="toc-verify-offspring-diagonals-through-the-recursion" class="nav-link" data-scroll-target="#verify-offspring-diagonals-through-the-recursion">4. Verify offspring diagonals through the recursion</a></li>
-  <li><a href="#distinguish-pedigree-inbreeding-from-marker-heterozygosity" id="toc-distinguish-pedigree-inbreeding-from-marker-heterozygosity" class="nav-link" data-scroll-target="#distinguish-pedigree-inbreeding-from-marker-heterozygosity">5. Distinguish pedigree inbreeding from marker heterozygosity</a></li>
+  <li><a href="#report-association-error-and-calibration" id="toc-report-association-error-and-calibration" class="nav-link" data-scroll-target="#report-association-error-and-calibration">4. Report association, error and calibration</a></li>
+  <li><a href="#evaluate-a-selected-shortlist-separately" id="toc-evaluate-a-selected-shortlist-separately" class="nav-link" data-scroll-target="#evaluate-a-selected-shortlist-separately">5. Evaluate a selected shortlist separately</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
   <li><a href="#package-connection-and-next-topic" id="toc-package-connection-and-next-topic" class="nav-link" data-scroll-target="#package-connection-and-next-topic">Package connection and next topic</a></li>
   </ul>
@@ -4090,8 +4090,8 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Relationships, mating and inbreeding</h1>
-<p class="subtitle lead">Quantitative Genetics Practical 9: Pairing parents with the same contributions</p>
+<h1 class="title">Validating predictions and selection decisions</h1>
+<p class="subtitle lead">Quantitative Genetics Practical 10: Targets, relatives and information at selection</p>
 </div>
 
 
@@ -4110,154 +4110,205 @@ window.Quarto = {
 
 <section id="learning-objectives" class="level2">
 <h2 class="anchored" data-anchor-id="learning-objectives">Learning objectives</h2>
-<p>Distinguish additive relationships from kinship; calculate offspring pedigree inbreeding; compare mating plans with identical parental contributions; and separate expected additive merit, inbreeding and observed heterozygosity.</p>
-<p>Continue from <a href="../tutorials/simulating_selection_response.html">Practical 8</a>, with the relationship recursion introduced in <a href="../tutorials/mouse_genetic_parameters.html">Practical 3</a>. This practical uses a small hypothetical pedigree and supplied predicted merit. It uses base R and the existing <a href="../scripts/mouse_practical_helpers.R">helper script</a>, with no data downloads or model fitting. Keep the <code>tutorials/</code> and <code>scripts/</code> folder arrangement when running the source locally.</p>
+<p>Define a validation target and deployment population; distinguish validation with represented families from validation in withheld families; fit preprocessing on training observations; assess association and calibration separately; and evaluate a selected shortlist without treating phenotype prediction as breeding-value accuracy.</p>
+<p>Continue from <a href="../tutorials/relationships_mating_inbreeding.html">Practical 9</a> and the real-data phenotype validation in <a href="../tutorials/mouse_genomic_breeding_values.html">Practical 5</a>. This practical uses a small hypothetical dataset with known simulation truth and base R. It is an illustration of validation design, not a qualification of a genetic evaluation method.</p>
 </section>
-<section id="define-the-ancestry-and-founder-base" class="level2">
-<h2 class="anchored" data-anchor-id="define-the-ancestry-and-founder-base">1. Define the ancestry and founder base</h2>
-<p>Two pairs of founders produce four candidates. M1 and F1 are full siblings; M2 and F2 are full siblings from the other pair. We assume the four founders are unrelated and noninbred. This assumption defines the pedigree reference base; missing founder ancestry does not prove unrelatedness in a real population.</p>
+<section id="state-the-prediction-question-first" class="level2">
+<h2 class="anchored" data-anchor-id="state-the-prediction-question-first">1. State the prediction question first</h2>
+<p>A breeding evaluation aims to predict additive genetic merit. A phenotype includes genetic and environmental contributions. Prediction performance therefore depends on the target, the population and which information will be available when selecting animals.</p>
+<p>For this lesson, fit a <strong>phenotype predictor</strong> using a marker-derived covariate and family labels. We deliberately simulate both genetic and shared environmental family effects. A fitted family coefficient can absorb both; it is not automatically a family breeding value.</p>
+<p>We compare two predeclared splits of equal size:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Split</th>
+<th>Training</th>
+<th>Validation</th>
+<th>Question</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Represented families</td>
+<td>Six animals per family</td>
+<td>Two other animals per family</td>
+<td>Prediction for additional animals from these families</td>
+</tr>
+<tr class="even">
+<td>Withheld families</td>
+<td>All animals in families 3–8</td>
+<td>All animals in families 1–2</td>
+<td>Prediction in families without training phenotypes</td>
+</tr>
+</tbody>
+</table>
+<p>The represented-family split can be appropriate when deployment includes relatives with earlier records. It does not establish performance in new families. A family-label split also does not guarantee unrelatedness in a real pedigree; connected ancestry needs explicit inspection.</p>
+</section>
+<section id="generate-phenotypes-and-retain-truth-separately" class="level2">
+<h2 class="anchored" data-anchor-id="generate-phenotypes-and-retain-truth-separately">2. Generate phenotypes and retain truth separately</h2>
+<p>For animal <span class="math inline">\(i\)</span> in family <span class="math inline">\(f\)</span>, define</p>
+<p><span class="math display">\[u_i=0.6z_i+g_f,\qquad y_i=u_i+c_f+e_i.\]</span></p>
+<p>Here <span class="math inline">\(z_i\)</span> is an observed marker-derived covariate, <span class="math inline">\(g_f\)</span> is an additive genetic family component, <span class="math inline">\(c_f\)</span> is a shared environmental component and <span class="math inline">\(e_i\)</span> is individual noise. Components are independent in this synthetic model. Values are in arbitrary trait units. This is a statistical teaching model, not a simulation of phased inheritance.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;../scripts/mouse_practical_helpers.R&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pedigree <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">id=</span><span class="fu">c</span>(<span class="st">&quot;SA&quot;</span>,<span class="st">&quot;DA&quot;</span>,<span class="st">&quot;SB&quot;</span>,<span class="st">&quot;DB&quot;</span>,<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;F1&quot;</span>,<span class="st">&quot;M2&quot;</span>,<span class="st">&quot;F2&quot;</span>),</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">sire=</span><span class="fu">c</span>(<span class="cn">NA</span>,<span class="cn">NA</span>,<span class="cn">NA</span>,<span class="cn">NA</span>,<span class="st">&quot;SA&quot;</span>,<span class="st">&quot;SA&quot;</span>,<span class="st">&quot;SB&quot;</span>,<span class="st">&quot;SB&quot;</span>),</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">dam=</span><span class="fu">c</span>(<span class="cn">NA</span>,<span class="cn">NA</span>,<span class="cn">NA</span>,<span class="cn">NA</span>,<span class="st">&quot;DA&quot;</span>,<span class="st">&quot;DA&quot;</span>,<span class="st">&quot;DB&quot;</span>,<span class="st">&quot;DB&quot;</span>))</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">mouse_relationship</span>(pedigree)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>F <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">diag</span>(A)<span class="sc">-</span><span class="dv">1</span>,<span class="fu">rownames</span>(A))</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(F<span class="sc">==</span><span class="dv">0</span>),A[<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;F1&quot;</span>]<span class="sc">==</span>.<span class="dv">5</span>,A[<span class="st">&quot;M2&quot;</span>,<span class="st">&quot;F2&quot;</span>]<span class="sc">==</span>.<span class="dv">5</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>          A[<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;F2&quot;</span>]<span class="sc">==</span><span class="dv">0</span>,A[<span class="st">&quot;M2&quot;</span>,<span class="st">&quot;F1&quot;</span>]<span class="sc">==</span><span class="dv">0</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(pedigree,<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20261010</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>families <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;family&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="fu">rep</span>(families,<span class="at">each=</span><span class="dv">8</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>z <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">64</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>family_genetic <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">rnorm</span>(<span class="dv">8</span>,<span class="at">sd=</span>.<span class="dv">7</span>),families)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>family_environment <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">rnorm</span>(<span class="dv">8</span>,<span class="at">sd=</span>.<span class="dv">8</span>),families)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>u <span class="ot">&lt;-</span> .<span class="dv">6</span><span class="sc">*</span>z<span class="sc">+</span>family_genetic[f]</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> u<span class="sc">+</span>family_environment[f]<span class="sc">+</span><span class="fu">rnorm</span>(<span class="dv">64</span>,<span class="at">sd=</span>.<span class="dv">5</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>observed <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">animal=</span><span class="fu">sprintf</span>(<span class="st">&quot;animal%02d&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">64</span>),<span class="at">family=</span>f,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>                       <span class="at">within_family=</span><span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>,<span class="dv">8</span>),<span class="at">marker_covariate=</span>z,<span class="at">phenotype=</span>y)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">unname</span>(u),observed<span class="sc">$</span>animal)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(observed<span class="sc">$</span>animal),<span class="sc">!</span><span class="fu">anyNA</span>(observed))</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(observed),<span class="at">digits=</span><span class="dv">3</span>,<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
-<th style="text-align: left;">id</th>
-<th style="text-align: left;">sire</th>
-<th style="text-align: left;">dam</th>
+<th style="text-align: left;">animal</th>
+<th style="text-align: left;">family</th>
+<th style="text-align: right;">within_family</th>
+<th style="text-align: right;">marker_covariate</th>
+<th style="text-align: right;">phenotype</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">SA</td>
-<td style="text-align: left;">NA</td>
-<td style="text-align: left;">NA</td>
+<td style="text-align: left;">animal01</td>
+<td style="text-align: left;">family1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">-0.114</td>
+<td style="text-align: right;">0.923</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">DA</td>
-<td style="text-align: left;">NA</td>
-<td style="text-align: left;">NA</td>
+<td style="text-align: left;">animal02</td>
+<td style="text-align: left;">family1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">-0.316</td>
+<td style="text-align: right;">1.184</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">SB</td>
-<td style="text-align: left;">NA</td>
-<td style="text-align: left;">NA</td>
+<td style="text-align: left;">animal03</td>
+<td style="text-align: left;">family1</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">-2.067</td>
+<td style="text-align: right;">0.503</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">DB</td>
-<td style="text-align: left;">NA</td>
-<td style="text-align: left;">NA</td>
+<td style="text-align: left;">animal04</td>
+<td style="text-align: left;">family1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.287</td>
+<td style="text-align: right;">1.766</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">M1</td>
-<td style="text-align: left;">SA</td>
-<td style="text-align: left;">DA</td>
+<td style="text-align: left;">animal05</td>
+<td style="text-align: left;">family1</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">-0.633</td>
+<td style="text-align: right;">0.540</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">F1</td>
-<td style="text-align: left;">SA</td>
-<td style="text-align: left;">DA</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">M2</td>
-<td style="text-align: left;">SB</td>
-<td style="text-align: left;">DB</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">F2</td>
-<td style="text-align: left;">SB</td>
-<td style="text-align: left;">DB</td>
-</tr>
-</tbody>
-</table>
-</div>
-<details class="code-fold">
-<summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(A[<span class="fu">c</span>(<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;M2&quot;</span>,<span class="st">&quot;F1&quot;</span>,<span class="st">&quot;F2&quot;</span>),<span class="fu">c</span>(<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;M2&quot;</span>,<span class="st">&quot;F1&quot;</span>,<span class="st">&quot;F2&quot;</span>)],<span class="at">digits=</span><span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<thead>
-<tr class="header">
-<th style="text-align: left;"></th>
-<th style="text-align: right;">M1</th>
-<th style="text-align: right;">M2</th>
-<th style="text-align: right;">F1</th>
-<th style="text-align: right;">F2</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">M1</td>
-<td style="text-align: right;">1.0</td>
-<td style="text-align: right;">0.0</td>
-<td style="text-align: right;">0.5</td>
-<td style="text-align: right;">0.0</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">M2</td>
-<td style="text-align: right;">0.0</td>
-<td style="text-align: right;">1.0</td>
-<td style="text-align: right;">0.0</td>
-<td style="text-align: right;">0.5</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">F1</td>
-<td style="text-align: right;">0.5</td>
-<td style="text-align: right;">0.0</td>
-<td style="text-align: right;">1.0</td>
-<td style="text-align: right;">0.0</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">F2</td>
-<td style="text-align: right;">0.0</td>
-<td style="text-align: right;">0.5</td>
-<td style="text-align: right;">0.0</td>
-<td style="text-align: right;">1.0</td>
+<td style="text-align: left;">animal06</td>
+<td style="text-align: left;">family1</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">-1.551</td>
+<td style="text-align: right;">-0.378</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>Each candidate has pedigree inbreeding zero, yet some candidate pairs are related. An individual’s inbreeding and its relationship to another individual are different quantities.</p>
+<p>Truth is reserved for evaluating decisions after fitting and prediction. In real data, true breeding values are unavailable. The model includes family covariance but does not implement pedigree Mendelian sampling or genotype-based inheritance as in Practical 8.</p>
 </section>
-<section id="from-parental-kinship-to-offspring-inbreeding" class="level2">
-<h2 class="anchored" data-anchor-id="from-parental-kinship-to-offspring-inbreeding">2. From parental kinship to offspring inbreeding</h2>
-<p>For two individuals <span class="math inline">\(s,d\)</span>, kinship <span class="math inline">\(\phi_{sd}\)</span> is the probability that one randomly drawn allele from each is identical by descent relative to the founder base. The additive relationship convention is <span class="math inline">\(A_{sd}=2\phi_{sd}\)</span>. The child’s two copies come from its parents, giving</p>
-<p><span class="math display">\[F_{\mathrm{child}}=\phi_{sd}=\frac{A_{sd}}{2},
-\qquad A_{\mathrm{child},\mathrm{child}}=1+F_{\mathrm{child}}.\]</span></p>
-<p>Thus mating these full siblings gives offspring <span class="math inline">\(F=0.25\)</span>. Pairing candidates from the two unrelated founder families gives <span class="math inline">\(F=0\)</span> under this pedigree model.</p>
-<section id="a-founder-copy-check" class="level3">
-<h3 class="anchored" data-anchor-id="a-founder-copy-check">A founder-copy check</h3>
-<p>Label the four distinct founder copies in family A. A random allele transmitted by either sibling is marginally uniform over these copies. With independent meioses producing and transmitting the siblings’ copies, enumerate all 16 equally likely pairs. Four pairs carry the same founder-copy identity.</p>
+<section id="fit-only-on-information-in-the-training-set" class="level2">
+<h2 class="anchored" data-anchor-id="fit-only-on-information-in-the-training-set">3. Fit only on information in the training set</h2>
+<p>Use ridge regression with an intercept, standardized marker covariate and family indicator columns. The penalty is fixed at 1 before looking at validation outcomes. The intercept is unpenalized; the marker and family coefficients are penalized. This is a compact phenotype-prediction model, not REML or a genomic breeding-value estimator.</p>
+<p>Training data determine the marker center and scale. Known family identities define columns without using outcomes. A family absent from training has a zero fitted coefficient under this model, so its predictions use the intercept and marker term.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>copies <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;SA-copy1&quot;</span>,<span class="st">&quot;SA-copy2&quot;</span>,<span class="st">&quot;DA-copy1&quot;</span>,<span class="st">&quot;DA-copy2&quot;</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>draws <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">sire_copy=</span>copies,<span class="at">dam_copy=</span>copies,</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">stringsAsFactors=</span><span class="cn">FALSE</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>F_fullsib <span class="ot">&lt;-</span> <span class="fu">mean</span>(draws<span class="sc">$</span>sire_copy<span class="sc">==</span>draws<span class="sc">$</span>dam_copy)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(F_fullsib<span class="sc">==</span>.<span class="dv">25</span>,F_fullsib<span class="sc">==</span>A[<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;F1&quot;</span>]<span class="sc">/</span><span class="dv">2</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>F_fullsib</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fit_predict <span class="ot">&lt;-</span> <span class="cf">function</span>(train,test,<span class="at">lambda=</span><span class="dv">1</span>) {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  center <span class="ot">&lt;-</span> <span class="fu">mean</span>(train<span class="sc">$</span>marker_covariate)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  scale <span class="ot">&lt;-</span> <span class="fu">sd</span>(train<span class="sc">$</span>marker_covariate)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.finite</span>(scale),scale<span class="sc">&gt;</span><span class="dv">0</span>,lambda<span class="sc">&gt;</span><span class="dv">0</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  make_design <span class="ot">&lt;-</span> <span class="cf">function</span>(data) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    family_columns <span class="ot">&lt;-</span> <span class="fu">outer</span>(data<span class="sc">$</span>family,families,<span class="st">&quot;==&quot;</span>)<span class="sc">*</span><span class="dv">1</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">colnames</span>(family_columns) <span class="ot">&lt;-</span> families</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cbind</span>(<span class="at">intercept=</span><span class="dv">1</span>,<span class="at">marker=</span>(data<span class="sc">$</span>marker_covariate<span class="sc">-</span>center)<span class="sc">/</span>scale,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>          family_columns)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  Xt <span class="ot">&lt;-</span> <span class="fu">make_design</span>(train); Xv <span class="ot">&lt;-</span> <span class="fu">make_design</span>(test)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  penalty <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="fu">rep</span>(lambda,<span class="fu">ncol</span>(Xt)<span class="sc">-</span><span class="dv">1</span>)))</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  coefficient <span class="ot">&lt;-</span> <span class="fu">solve</span>(<span class="fu">crossprod</span>(Xt)<span class="sc">+</span>penalty,<span class="fu">crossprod</span>(Xt,train<span class="sc">$</span>phenotype))</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  prediction <span class="ot">&lt;-</span> <span class="fu">drop</span>(Xv <span class="sc">%*%</span> coefficient)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(prediction) <span class="ot">&lt;-</span> test<span class="sc">$</span>animal</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">prediction=</span>prediction,<span class="at">coefficient=</span>coefficient,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>       <span class="at">preprocessing=</span><span class="fu">c</span>(<span class="at">center=</span>center,<span class="at">scale=</span>scale))</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>splits <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">Represented=</span>observed<span class="sc">$</span>within_family<span class="sc">&lt;=</span><span class="dv">6</span>,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">Withheld=</span><span class="sc">!</span>observed<span class="sc">$</span>family <span class="sc">%in%</span> families[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>])</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>fits <span class="ot">&lt;-</span> <span class="fu">lapply</span>(splits,<span class="cf">function</span>(training)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fit_predict</span>(observed[training,],observed[<span class="sc">!</span>training,]))</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">vapply</span>(splits,sum,<span class="fu">integer</span>(<span class="dv">1</span>))<span class="sc">==</span><span class="dv">48</span>))</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">do.call</span>(rbind,<span class="fu">lapply</span>(<span class="fu">names</span>(splits),<span class="cf">function</span>(label) {</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  training <span class="ot">&lt;-</span> splits[[label]]</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">split=</span>label,<span class="at">training=</span><span class="fu">sum</span>(training),<span class="at">validation=</span><span class="fu">sum</span>(<span class="sc">!</span>training),</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">validation_families=</span><span class="fu">length</span>(<span class="fu">unique</span>(observed<span class="sc">$</span>family[<span class="sc">!</span>training])),</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">shared_families=</span><span class="fu">length</span>(<span class="fu">intersect</span>(<span class="fu">unique</span>(observed<span class="sc">$</span>family[training]),</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">unique</span>(observed<span class="sc">$</span>family[<span class="sc">!</span>training]))))</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>})),<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.25</code></pre>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 13%">
+<col style="width: 16%">
+<col style="width: 29%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">split</th>
+<th style="text-align: right;">training</th>
+<th style="text-align: right;">validation</th>
+<th style="text-align: right;">validation_families</th>
+<th style="text-align: right;">shared_families</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Represented</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Withheld</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
-<p>This is a probability over possible inheritance histories, not a statement that exactly one quarter of the genome in every offspring will be autozygous. Identity by descent refers to ancestral copy identity; identical nucleotide states can occur without shared descent within the declared base.</p>
-<p><strong>Question 1.</strong> Why is offspring inbreeding 0.25 rather than the full-sibling relationship 0.5?</p>
+<p><strong>Question 1.</strong> Is withholding phenotypes sufficient if marker filtering, imputation or tuning used the full dataset?</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Suggested answer">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -4270,222 +4321,208 @@ Suggested answer
 </div>
 <div id="callout-1" class="callout-1-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>The additive relationship is twice kinship. Offspring inbreeding equals parental kinship because the child’s paternal and maternal copies are drawn from the two parents. Confusing these conventions gives a factor-of-two error.</p>
+<p>It depends on the intended information available at deployment. Any step using validation outcomes leaks the target. Preprocessing and tuning should follow the declared deployment design; here marker scaling uses training data only and the penalty is fixed beforehand. A supplied real-data imputation procedure still needs its own information audit. Practical 5 explicitly retains that limitation for the provided mouse genotypes.</p>
 </div>
 </div>
 </div>
-</section>
-</section>
-<section id="hold-contributions-fixed-and-change-pairings" class="level2">
-<h2 class="anchored" data-anchor-id="hold-contributions-fixed-and-change-pairings">3. Hold contributions fixed and change pairings</h2>
-<p>Each plan has eight offspring and uses every selected parent four times. Only sire/dam pairings differ. Scores are hypothetical predicted additive merit in trait units on one fixed base, not phenotypes or known genetic truth.</p>
+<section id="check-the-boundary-between-training-and-validation" class="level3">
+<h3 class="anchored" data-anchor-id="check-the-boundary-between-training-and-validation">Check the boundary between training and validation</h3>
+<p>Change validation phenotypes while leaving training data unchanged. Predictions must stay the same. This small check verifies the fitting function’s information boundary; it does not certify every upstream data-processing step.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>scores <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">M1=</span><span class="dv">12</span>,<span class="at">M2=</span><span class="dv">8</span>,<span class="at">F1=</span><span class="dv">10</span>,<span class="at">F2=</span><span class="dv">6</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>within <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">animal=</span><span class="fu">paste0</span>(<span class="st">&quot;W&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>),</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">sire=</span><span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;M2&quot;</span>),<span class="at">each=</span><span class="dv">4</span>),<span class="at">dam=</span><span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;F1&quot;</span>,<span class="st">&quot;F2&quot;</span>),<span class="at">each=</span><span class="dv">4</span>))</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>between <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">animal=</span><span class="fu">paste0</span>(<span class="st">&quot;B&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>),</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">sire=</span><span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;M2&quot;</span>),<span class="at">each=</span><span class="dv">4</span>),<span class="at">dam=</span><span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;F2&quot;</span>,<span class="st">&quot;F1&quot;</span>),<span class="at">each=</span><span class="dv">4</span>))</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>all_pairs <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">sire=</span><span class="fu">c</span>(<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;M2&quot;</span>),<span class="at">dam=</span><span class="fu">c</span>(<span class="st">&quot;F1&quot;</span>,<span class="st">&quot;F2&quot;</span>),</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">stringsAsFactors=</span><span class="cn">FALSE</span>)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>mixed <span class="ot">&lt;-</span> all_pairs[<span class="fu">rep</span>(<span class="fu">seq_len</span>(<span class="dv">4</span>),<span class="at">each=</span><span class="dv">2</span>),]</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>mixed<span class="sc">$</span>animal <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;X&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>mixed <span class="ot">&lt;-</span> mixed[,<span class="fu">c</span>(<span class="st">&quot;animal&quot;</span>,<span class="st">&quot;sire&quot;</span>,<span class="st">&quot;dam&quot;</span>)]</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>plans <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">Within=</span>within,<span class="at">Between=</span>between,<span class="at">Mixed=</span>mixed)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>parent_ids <span class="ot">&lt;-</span> <span class="fu">names</span>(scores)</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>contributions <span class="ot">&lt;-</span> <span class="fu">lapply</span>(plans,<span class="cf">function</span>(plan) {</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  counts <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="fu">factor</span>(<span class="fu">c</span>(plan<span class="sc">$</span>sire,plan<span class="sc">$</span>dam),<span class="at">levels=</span>parent_ids))</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(<span class="fu">as.numeric</span>(counts)<span class="sc">/</span>(<span class="dv">2</span><span class="sc">*</span><span class="fu">nrow</span>(plan)),parent_ids)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">vapply</span>(contributions,<span class="cf">function</span>(c) <span class="fu">all</span>(c<span class="sc">==</span>.<span class="dv">25</span>),<span class="fu">logical</span>(<span class="dv">1</span>))))</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(<span class="at">parent=</span>parent_ids,<span class="at">score=</span>scores,</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">contribution=</span>contributions<span class="sc">$</span>Within),<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>training <span class="ot">&lt;-</span> splits<span class="sc">$</span>Represented</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>test_changed <span class="ot">&lt;-</span> observed[<span class="sc">!</span>training,]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>test_changed<span class="sc">$</span>phenotype <span class="ot">&lt;-</span> test_changed<span class="sc">$</span>phenotype<span class="sc">+</span><span class="dv">100</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>unchanged <span class="ot">&lt;-</span> <span class="fu">fit_predict</span>(observed[training,],test_changed)<span class="sc">$</span>prediction</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(unchanged,fits<span class="sc">$</span>Represented<span class="sc">$</span>prediction))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Animals from withheld families receive no estimated family effect.</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>absent <span class="ot">&lt;-</span> families[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(fits<span class="sc">$</span>Withheld<span class="sc">$</span>coefficient[absent,<span class="dv">1</span>]<span class="sc">==</span><span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="report-association-error-and-calibration" class="level2">
+<h2 class="anchored" data-anchor-id="report-association-error-and-calibration">4. Report association, error and calibration</h2>
+<p>For validation phenotypes, report correlation, root mean squared error in trait units, mean error (prediction minus observation), and the intercept/slope of the diagnostic regression <span class="math inline">\(y=\alpha+\beta\widehat y+\epsilon\)</span>.</p>
+<p>Ideal calibration would give intercept zero and slope one in the appropriate population. Correlation can remain unchanged under a positive rescaling or constant shift. Calibration diagnostics on 16 records are descriptive and uncertain.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show R code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>metrics <span class="ot">&lt;-</span> <span class="cf">function</span>(y,prediction) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  calibration <span class="ot">&lt;-</span> <span class="fu">lm</span>(y<span class="sc">~</span>prediction)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="at">correlation=</span><span class="fu">cor</span>(y,prediction),<span class="at">RMSE=</span><span class="fu">sqrt</span>(<span class="fu">mean</span>((prediction<span class="sc">-</span>y)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_error=</span><span class="fu">mean</span>(prediction<span class="sc">-</span>y),<span class="at">intercept=</span><span class="fu">unname</span>(<span class="fu">coef</span>(calibration)[<span class="dv">1</span>]),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">slope=</span><span class="fu">unname</span>(<span class="fu">coef</span>(calibration)[<span class="dv">2</span>]))</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind,<span class="fu">lapply</span>(<span class="fu">names</span>(splits),<span class="cf">function</span>(label) {</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  training <span class="ot">&lt;-</span> splits[[label]]</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  test <span class="ot">&lt;-</span> observed[<span class="sc">!</span>training,]</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  prediction <span class="ot">&lt;-</span> fits[[label]]<span class="sc">$</span>prediction[test<span class="sc">$</span>animal]</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  baseline <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">mean</span>(observed<span class="sc">$</span>phenotype[training]),<span class="fu">nrow</span>(test))</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">split=</span>label,<span class="fu">t</span>(<span class="fu">metrics</span>(test<span class="sc">$</span>phenotype,prediction)),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">baseline_RMSE=</span><span class="fu">sqrt</span>(<span class="fu">mean</span>((baseline<span class="sc">-</span>test<span class="sc">$</span>phenotype)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">score_truth_correlation=</span><span class="fu">cor</span>(prediction,truth[test<span class="sc">$</span>animal]))</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(results,<span class="at">digits=</span><span class="dv">3</span>,<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 6%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 6%">
+<col style="width: 14%">
+<col style="width: 25%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">parent</th>
-<th style="text-align: right;">score</th>
-<th style="text-align: right;">contribution</th>
+<th style="text-align: left;">split</th>
+<th style="text-align: right;">correlation</th>
+<th style="text-align: right;">RMSE</th>
+<th style="text-align: right;">mean_error</th>
+<th style="text-align: right;">intercept</th>
+<th style="text-align: right;">slope</th>
+<th style="text-align: right;">baseline_RMSE</th>
+<th style="text-align: right;">score_truth_correlation</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">M1</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">0.25</td>
+<td style="text-align: left;">Represented</td>
+<td style="text-align: right;">0.954</td>
+<td style="text-align: right;">0.573</td>
+<td style="text-align: right;">-0.041</td>
+<td style="text-align: right;">0.072</td>
+<td style="text-align: right;">1.169</td>
+<td style="text-align: right;">1.735</td>
+<td style="text-align: right;">0.919</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">M2</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">F1</td>
-<td style="text-align: right;">10</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">F2</td>
-<td style="text-align: right;">6</td>
-<td style="text-align: right;">0.25</td>
+<td style="text-align: left;">Withheld</td>
+<td style="text-align: right;">0.822</td>
+<td style="text-align: right;">1.713</td>
+<td style="text-align: right;">-1.653</td>
+<td style="text-align: right;">1.569</td>
+<td style="text-align: right;">0.839</td>
+<td style="text-align: right;">2.006</td>
+<td style="text-align: right;">0.854</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>Under the additive model, the expected offspring merit based on predictions is</p>
-<p><span class="math display">\[\widehat E(\overline H_{\mathrm{offspring}}\mid\mathrm{plan})
-=\sum_j c_j\widehat H_j=9.\]</span></p>
-<p>Equal contributions preserve this expectation across all three plans. Pairings still change the expected probability of autozygosity.</p>
+<p>The last column uses known synthetic genetic truth. It describes the correlation of this <strong>phenotype-prediction score</strong> with genetic merit. It does not convert the score into a calibrated breeding-value prediction. In real data, validation phenotype correlation cannot generally be called breeding-value accuracy; shared environment, fixed effects and relatedness matter.</p>
+<p>The two splits use different validation animals and family targets. Their numerical difference cannot be attributed solely to removing relatives. A population-level comparison would require a planned replicated validation design. The withheld split contains only two independent synthetic families, so treating all 16 records as independent validation units would misrepresent uncertainty.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>assess_plan <span class="ot">&lt;-</span> <span class="cf">function</span>(plan,label) {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  where <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">match</span>(plan<span class="sc">$</span>sire,<span class="fu">rownames</span>(A)),<span class="fu">match</span>(plan<span class="sc">$</span>dam,<span class="fu">colnames</span>(A)))</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyNA</span>(where))</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  offspring_F <span class="ot">&lt;-</span> A[where]<span class="sc">/</span><span class="dv">2</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  predicted <span class="ot">&lt;-</span> (scores[plan<span class="sc">$</span>sire]<span class="sc">+</span>scores[plan<span class="sc">$</span>dam])<span class="sc">/</span><span class="dv">2</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">plan=</span>label,<span class="at">offspring=</span><span class="fu">nrow</span>(plan),<span class="at">predicted_mean=</span><span class="fu">mean</span>(predicted),</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_F=</span><span class="fu">mean</span>(offspring_F),<span class="at">maximum_F=</span><span class="fu">max</span>(offspring_F))</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>comparison <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind,<span class="fu">lapply</span>(<span class="fu">names</span>(plans),<span class="cf">function</span>(label)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">assess_plan</span>(plans[[label]],label)))</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(comparison<span class="sc">$</span>predicted_mean<span class="sc">==</span><span class="dv">9</span>),</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>          <span class="fu">identical</span>(comparison<span class="sc">$</span>mean_F,<span class="fu">c</span>(.<span class="dv">25</span>,<span class="dv">0</span>,.<span class="dv">125</span>)))</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(comparison,<span class="at">digits=</span><span class="dv">3</span>,<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  old <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)); <span class="fu">on.exit</span>(<span class="fu">par</span>(old))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(label <span class="cf">in</span> <span class="fu">names</span>(splits)) {</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    test <span class="ot">&lt;-</span> observed[<span class="sc">!</span>splits[[label]],]</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    prediction <span class="ot">&lt;-</span> fits[[label]]<span class="sc">$</span>prediction[test<span class="sc">$</span>animal]</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    limits <span class="ot">&lt;-</span> <span class="fu">range</span>(prediction,test<span class="sc">$</span>phenotype)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plot</span>(prediction,test<span class="sc">$</span>phenotype,<span class="at">xlim=</span>limits,<span class="at">ylim=</span>limits,<span class="at">pch=</span><span class="dv">16</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">col=</span><span class="st">&quot;#247BA0&quot;</span>,<span class="at">main=</span><span class="fu">paste</span>(label,<span class="st">&quot;families&quot;</span>),</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">xlab=</span><span class="st">&quot;Predicted phenotype&quot;</span>,<span class="at">ylab=</span><span class="st">&quot;Observed phenotype&quot;</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">abline</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">lty=</span><span class="dv">2</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<thead>
-<tr class="header">
-<th style="text-align: left;">plan</th>
-<th style="text-align: right;">offspring</th>
-<th style="text-align: right;">predicted_mean</th>
-<th style="text-align: right;">mean_F</th>
-<th style="text-align: right;">maximum_F</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">Within</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">9</td>
-<td style="text-align: right;">0.250</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Between</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">9</td>
-<td style="text-align: right;">0.000</td>
-<td style="text-align: right;">0.00</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Mixed</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">9</td>
-<td style="text-align: right;">0.125</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="cell">
-<details class="code-fold">
-<summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">local</span>({</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  old <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)); <span class="fu">on.exit</span>(<span class="fu">par</span>(old))</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">barplot</span>(<span class="fu">setNames</span>(comparison<span class="sc">$</span>predicted_mean,comparison<span class="sc">$</span>plan),<span class="at">col=</span><span class="st">&quot;#247BA0&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>          <span class="at">ylab=</span><span class="st">&quot;Predicted offspring merit&quot;</span>,<span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">10</span>))</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">barplot</span>(<span class="fu">setNames</span>(comparison<span class="sc">$</span>mean_F,comparison<span class="sc">$</span>plan),<span class="at">col=</span><span class="st">&quot;#D8A47F&quot;</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>          <span class="at">ylab=</span><span class="st">&quot;Mean offspring pedigree F&quot;</span>,<span class="at">ylim=</span><span class="fu">c</span>(<span class="dv">0</span>,.<span class="dv">3</span>))</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<div id="fig-mating-inbreeding" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div id="fig-validation" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-mating-inbreeding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="data:image/png;base64,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" class="img-fluid figure-img" width="864">
+<div aria-describedby="fig-validation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAB4AAAAPACAMAAADja5SLAAAA/FBMVEUAAAAAADoAAGYAOjoAOmYAOpAAZmYAZpAAZrYke6A6AAA6ADo6OgA6Ojo6OmY6OpA6ZmY6ZpA6ZrY6kJA6kLY6kNtmAABmADpmOgBmOjpmZjpmZmZmZpBmkJBmkLZmkNtmtpBmtttmtv+QOgCQOjqQZgCQZjqQZmaQkGaQkJCQkLaQkNuQtraQttuQtv+Q27aQ29uQ2/+2ZgC2Zjq2kDq2kGa2kJC2kLa2tpC2tra2ttu225C227a229u22/+2/9u2///bkDrbkGbbtmbbtpDbtrbb25Db27bb29vb2//b/7bb/9vb////tmb/25D/27b/29v//7b//9v///8/aG0cAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO3df2MTWZbe8RKYBDmYNCQmZugwAbLs7mTYbJthM+5sk3bDBMhiuy29//cSVZVUKkkluUq695xz7/l+/ui2jaWqW7qPHlmqH8UUAACIK7RXAAAAjyhgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAoo4ECuj4u2+49fftNepd0+/bHvb56XA3q4+fPJh0ezfxg9/h/f912H22flHfy0/UvAhGpONiGYvKlC/mAx8S/n363P3EXGrlZ+u7Hlx9tXoCMUhDNtFHAgawVcerr33I/v81lx2vd3t2S8GXHPp5AOZBxpqCt3MdPrOl7O0UVCVmfuMmPyBUw4E0EBB9JRwAdM/shu3s7W7sACnj8Jdb/+7omMIxHVH7n3fq2/uZrP/Nf1t3U7v16due2MiRcw4UwFBRxIVwH37zhh54NWrjvjVwFGScaRiKt2416utluV/XLCtmduO2PiBUw4U0EBB9KEsPL726L9itmaEAVcPQmVA54EWSWCDcvqvynrzMw/Am7K86or66oFTDhTQQEHslrA82AsXjFbE6yAw73JTsZhWV26dQqaN3jn8/WyKyD6BUw4E0ABB7JewFeW34OmgIFhWh8Cr73BW3fzepwoYPRAAQeyXsD1Z8JNKr+8Lb8/WR6bdFn/gVwfLfD43cqPT6e/zX56/+X37pvOfP5DebPi5Mm71g83f/Nqvg7VP4yefFz+cO71lhtWy3g++9n9V9+7Mt6+j/pffv9wUv1N8PjlIvbn9QaZVP8wH2F1nyfNr/T6mKn/+IForpZ/8pYhHf2hmfvL+dp8tZaxRdPelFP5/tNv7bvc/HFpY9KvhYJwZoICDmRnAd+8aRKxODapLuBPi123jj62fnz6flmPHTdd2eHrqFlkx2/WBXxztvj5afPD5ZND9yKmzY2OPvbJ+G/LVRrND36sM/5b63iI5j4X26lHxvuPH4ionnRlYKq/eO/97/L76i/i6+ar3QX8b+/XErLlx52TfjUUhDMXFHAgu96CXtlDev7GUNW0L5Y/bn+cdFL/qMx0102vVna4Xiyz8zfLr39o/cPpdLOAu27Y/uGoej27O+OXRVs96irjJ627/r/L+5zvsXJ3xvuPH4hp+UZzNScfVt9Xk++qycfuAv671dxt/XHnpN8SCsKZOAo4kLUCruPamrOrmVhPRTPt2z8+7b7p2s/mM79zIVfFmnIha08OnTecvCnW7Mz42jFY9VDO1++irX4auDPj/ccPxHW+mGxXdXKaD3mXn/buLODNObvlx52JbIWCcGaEAg5kpYB///KmFYxqso9efZ9O6jebqte586Y9ete8oXTa+nExv7Oum9YHPfxzuZjW/XUu5Gq5kM/Hyx+v7CCyY+2qlXvTildbez+P6j7Kd9HrodSbYZ7xp9+mk7/Mh3T0y3Rav+veeqrZlfH+4wfiag42mn9+uvjDd/mn8O7jgOvp307Ilh93JrJ114QzIxRwIF0n4thM5fKAhTpF9VSvX9JWL03nBfx0832n5qaXrWSf3//xz9+2L+SqtZD2mQRaTw6dN2yt0CKruzLeuo/lJ2Xz25227qP+7dbupHdlvP/4gcgWL7GrcCxO/Dybx4v/T+8q4Hr6txLS/ePuKC9/SjhzQgEH0lHA88m5/Iho2grrZasPW38+t3t5y03rg+zX9jDsXki7dNtnEmg9OXTesJXUxTc7X2RP/vb3J+1DJJcZnz9PtEfbOm3BXRnvP34gssWHwPVHwMu/fKvvN8quo4Bfr9zN1h93R3l514QzJxRwIBsFPFrsF9hO4vLtqpVzyy7Tt9LL3TddLOn+jz8vP2DpXkjr0ImVoxXPO79c3vBqc+V6Hmq4nvH2LmfzO2y9WX9XxvuPH4htvsPx1WKGz//aa/3Rt7OAN3PY/ePuKK8VH+HMBAUcyFoBLw4r6tplYpneJiLNZG7OIbf9pu2fLo7t3bKQdla7C7j7hh0r1yfjky//8KhZ9srN2ivSP+P9xw9EN5/x50W7Cevv2+8ybSvgRWcu/6Hzx1uivLxrwpkTCjiQZub+/qGq4maH6I6J2jRtE5wmDx1/GG/c9Pas/ZOq6rf85pbg7y7g0/X8dp5pbz3jNx+eL1+CdGd8/ssHZXzL+IHo6on7P58tpnL9vuv/ebPMWK+LMawV8PqPt036LQVMONNGAQfSmrlX7R2O9yngRXK23HQ6+dD+c3tHGrYEP3wBf1r9+z9uxjvGD0RXv4P7X4+baV3N8P+2/AjYaAETTsMo4EDahyFdtude95lid74FvVrAneds/v3Do2aSP9z6m30LeP2GV5srtzPj83P5nPz48/9b+5gpQMb7jB+Ib3nwbP3iennWnPkcDVfAG5N+7TNgwpkJCjiQleOA66S2jxToLuAtO2Ft9nKnr//yvFlO92/eXcDdNxy4n0e9M0m16+P6fh4HZXzA+IHomoP02x+Ytgo5SAFvmfR774RFOE2jgANZKeD5+WBa57za2CNx12FIq+8vrd908uXD8//w09oNuxfSo4A7b9hKap8jHdYPKw6W8f7jB6JrCndxgM/iXdhFywQp4B17MC/3hyacmaCAA1mdbfNz3Lxu/mVx1O3oh5e/LI94L+5VOynUQa7m8uqs7rppnaKHrV9YHrm7vpAeBdx5w/ax/pP2Sb1almvafjOq9boiQMb7jx+IrjnP4uLvvsV70ouIBSng7ih3n4iDcKaOAg5k7eVe++wy9ddPv08nvy3P9DZ/O2v0quNUlMuXlV03nd91Wd2fz5pf71zIzgKe3cOXb7tu2D5P5t0ZL0fye+syTiEyPmD8QGzNX7yL4/QXZ11eFPJGAc8zNqiAuxPZumvCmREKOJC1Ap6/WD5t/qmlfS7opdap4JaTtuumzevwlfvrXMi2Am4Wfrrlhned7311TTfGsnweOTDj/ccPRDef6M1fdYvpuZiBG2dnnIdhWAF3JrJ114QzIxRwIN2XI1w5LqkdgDoXR8uD5tqxbb1q7Lrp2sQ/3f6b2wq4uYfTLTdcOZzvh+WBFy3rp5udO2l+OUTGB4wfiG3+F2+Tz3kVNrFvz9x2xoYVcOekb9814cwHBRzIegHPs1nP65tW0b6q/72OyL+9nf94ccT6xp4NHTed3rwtNn/Y9ZvbEr44NKGOYNcippNmGafXd2V8et1czPvV8uy1QTI+YPxAZO33tSqrp25fnbmtjA0s4K5Jv3LXhDMbFHAgG7v8zV8KziP15W15aNzo8bv1HZw/l3vrP27OXt6xa+HGTWdu/qE6/PD+yg83f3NrwuvF3v/h3fZFTL9Uv/Ly2/TujE8nn06qX/7eWkyYjA8ZPxBV+yrflauiaGdjdeYuMza0gDsm/XooCGceKGAl3QcbAAC8oICVUMAA4BsFrIQCBgDfKGAlFDAA+EYBK6GAAcA3ClgJBQwAvlHASihgAPCNAlZCAQOAbxQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAtsFXABZ0U6ULO2tDYQVPiLB7zEg7a0NhKadKUna2xoILXhGQt9hSL6erpA/XzPa12iRPwoYSJivGe1rtMgfBQwkzNeM9jVa5I8CBhLma0b7Gi3yRwEDCfM1o32NFvmjgIGE+ZrRvkaL/FHAQIIWM9nXjPY1WuQrXn5NR4QAIwsFBQwkK2J+TUeEACMDreP3fc1oX6NFpqLm13RECDDS1z5/jq8Z7Wu0yFPc/JqOCAFG8lZOX+drRvsaLbIUOb+mI0KAkbrV08f6mtG+Roscxc6v6YgQYKRudQ77mtG+Roscxc6v6YgQYOTF14z2NVrkjwIGYhrPRLx7XzPa12gVRZ61WKCAgXjGc9EW4GtG+xqtmuizFgsUMBDNeBz7uczXjPY1Wi3xZy0WKGAglvE44HNZ99z1NaN9jVZJ0FmLBan8mo4IAYagkE9lBQXsbbRKKOAYxPJrOiIEGHLG42DPZcWW/Dqb0b5GqyPgrMWCYH5NR4QAQ064p7Kt+XU2o32NVgcFHJ5kfk1HhABDTrCnsq3x9TajfY1WBwUcnGh+TUeEAENOqKeyHfl1NqN9jVYHBRyabH5NR4QAQ1CwP4D3+7f8+BqtEvo3MNn8mo4IAYYggacyXzPa12iVUMCCKGAgmvjPZL5mtK/RaqF/5VDAQDzRn8l8zWhfo1VD/4qhgIGYIj+R+ZrRvkariPoVQgEDCfM1o32NFvmjgAGj+sxWXzPa12iRNp38mo4IAUYydh0+2Pql+Ctih6/RImlK+TUdEQKMRGw/e93ar0VfE0N8jRYJU8uv6YgQYKShZ36dzWhfo0W69PJrOiIEGEnoGV9vM9rXaJEsxfyajggBRgp659fZjPY1WqRKM7+mI0KAkYL+89TXjPY1WqRKM7+mI0KAkRdfM9rXaJE/ChhImK8Z7Wu0yB8FDCTM14z2NVrkjwIGEuZrRvsaLfJHAQMJ8zWjfY0W+aOAATOGz09fM9rXaJEaC/k1HRECDMP6Hz7YukmMFbHK12iRGBP5NR0RAgyz+p69bu1GEdbELF+jRVKM5Nd0RAgwrNorv85mtK/RIiVW8ms6IgQYRu0VX28z2tdokRAz+TUdEQIMm/bMr7MZ7Wu0SIed/EaNyOTD85Mf/vS9+f72WXHv1wG3J8Cwad+Z6WtG+xot0mEnvzEj8ttx+UZ7MXq5qGAKGL75mtG+Rov8JVXAl8XCg3kDU8DwzdeM9jVa5C+lAr6e/f179O7r1w/l/+vapYDhm68Z7Wu0yF9KBXy5+Mv35mzRwBQwfPM1o32NFvlLqIAnb4ri9fLLqospYPjma0b7Gi3yl1ABt8u2bOCH07sKuOgQa+2AfRw6I33NaF+jhX328itSwOU3xSkFjMQdPCN9zWhfo4V5BvMrU8DlHlmjn3gLGikL8IrQ14z2NVoYZzK/Ep8Bl66K4t5HChjpCvGOjK8Z7Wu0sM1mfqPuBf1w9dt7/0oBI1VBPhDxNaN9jRamGc1v3OOAn3xbfv+++lCXAkaSwuyQ4GtG+xotLLOa38hnwmr37XsKGMkKMxd9zWhfo4VlVvMbMyKfjlf7dvY9BQzPfM1oX6NF/tIq4Onk84/fV75/f0wBwzFfM9rXaJG/xAr4UAQYefE1o32NFvmjgIGE+ZrRvkaL/FHAQMJ8zWhfo0X+KGBAVNg56GtG+xotLLKeX9MRIcDQFfp85L5mtK/Rwh77+TUdEQIMVcGvB+JrRvsaLcxJIL+mI0KAoSjC5bh8zWhfo4UxSeTXdEQIMPTEuBymrxnta7SwJY38mo4IAYaeGLPP14z2NVrYkkZ+TUeEACMvvma0r9EifxQwkDBfM9rXaJE/ChhImK8Z7Wu0yB8FDCTM14z2NVrkjwIGEuZrRvsaLfJHAQOxRZx2vma0r9HCiKTyazoiBBjiYhw+2LrzaHdtkK/RwoTE8ms6IgQY0qLm19mM9jVaWJBafk1HhABDVtz4epvRvkYLfenl13RECDBExc6vsxnta7RQl2B+TUeEAGdtPKO9DquiTzhfM9rXaKEuwfyajggBzth4Tns9RPma0b5Gi/xRwMjEeOyxgX3NaF+jRf4oYORhPFZpYO3C9zWjfY0W+aOAkQeVAtb/m9vXjPY1WuSPAkYWxmOFBjbwrrevGe1rtHnQfo/INgoYWdAo4B1LFJtovma0r9HmQP0V6n4Szq/piBDgXNkq4NhHD7aXJLQgE3yNNgMG3iPaR8r5NR0RApwrhQLeusjoR++vLEtqSRb4Gm36VHbMOFja+TUdEQKcLd0/gNvLlMyvsxnta7TpS7KAE8+v6YgQ4GyZKWDJ+Hqb0b5GmzyNz4UOlnp+TUeEAOdLPOndTy+y+XU2o32NNnkpFnDy+TUdEQKcsd1Bj/AUsOUP4MBL2c3XjPY12uSlWcCJL850RAhw1nbXb/AnAQvPLr5mtK/RJi/FAhZGAcOBSM8CBp5cfM1oX6NNH/17FwoY+Yv2PKD/5OJrRvsabfoo4LtQwMhfxOcB7acWXzPa12gzQP/egQJG9nL+KMrXjPY12hzkmbpwKGBkT6SAlaaWrxnta7R5SKR+s8mv6YgQYI8kClj48MHWclUWq8TXaCEnn/yajggB9ih+AYuevW5tyTrL1eFrtJCSU35NR4QAu5Rv/yY2oycfnp/88Kfvzfe3z4p7vw64fVqjRSKyyq/piBBglyIXsF58E5vRvx2XT3XF6OWigilg6Msrv6YjQoB9yrZ/k5rRl8XCg3kDU8BQl1l+TUeEADsV9w3oGPeawsKHuZ79/Xv07uvXD+X/69qlgKEus/yajggBdiuRoyGGSmhGXy7+8r05WzQwBQzfKGAgYenM6Mmboni9/LLqYgoYvlHAQMLSmdHtsi0b+OH0rgIuOoisKiCEAgYSls6MXinb2TfFKQUM7yhgIGHpzOjVsr0+LkY/8RY0nKOAgf2YmEwmVqKX1mfApauiuPeRAoYaE5OJAgb2YuP9UBMr0c9l/blv69t7/0oBQ0mu+bUwqq1MbHMkbzy28nmkjbXopTwO+Mm35ffvqw91KWAoyDe/Joa1jY2NjrSN6/41cVhxSjP6cq1v31PA0GGlfylgYKC6f42c2COpGf3peLVvZ99TwJBnpX4pYGCgZf9aaOC0ZvTk84/fV75/f0wBQ5qd/qWAgWGqAo54aulhfM1oX6NFJIamEQUMDDFeob02zma0r9EifxQwMAQFrMjXaJE/ChgYggJW5Gu0yB8FDAxBASvyNVrkjwIGBjHVv85mtK/RIn8UMNBXNX0oYD2+RovADE4fChjoZ3H2HEv962xG+xotgjJz9qs2ChjoZZlfQ/3rbEb7Gi1CMtm/FDDQx2p8rdSvtxnta7QIx2b9UsBAH1bz62xG+xotgnGUX5vjnDP6KMA6sxPH7IpF4Wu0CMbsxKGAgX0ZeCfa14z2NVrkjwIG9mNiXyxfM9rXaJE/ChjYi42jkXzNaF+jrWhPMERFAQP7MHI+Dl8z2tdop0beZUE8FDCwDwpYga/RWnmXBfFQwMAO22aMlWsy+JrRvkZr5UVeyqzPGAoY2Gr74YMUsAZfo6WAD2X28N8GBQxssyO/FLAGX6O1MseSZb9/KWBgi53xtfLk6GtG+xqtlTmWqATqlwIGtrgjv0aeG33NaF+jpYAPkUT/UsBAtzvmipHnRl8z2tdoKeBDpDFXKGBgLzaeGn3NaF+jtfIiD/FQwMB+TDw1+prRvkZLAeePAgb2ZeCJ0deM9jVaK++yIB4KGEiYrxnta7RTI++yIB4KGEiYrxnta7QV6jdrFDCwIq05ktbaHsrXaLGPtOYIBQy0JXH04FJaa3soX6PFHtzn1/Tw03pwIC6No/dbElvdA/kaLQYjv/EK+PZZ0eXer0NWLq1HB8KSy6+zGe1rtBiK/FLASFdy8fU2o32NNpZs9+siv9OYb0HfnA0s4K5fj7Z2SF6K0yPBVT6Ar9HGke+RTeS3usfQd7g0eVMUpwN+nwLGECnOjhTXeX++RhtFxuf2SHF2JFXAVQO/PuQOUnyIgO18zWhfo42Bs1vaIlfAv19c/Px9Ovl20J3fPhv2me86Aoy8iM3oIPk9FPk9FAVsi1QBf3pUf1x7++zo4yH3fjXsTeh1BBh5EZrRofJ7IPJ7IK5waIxQAb9f7C81+xN29NMB9z55c9CfwAQYeZGZ0cHyeyDyeyAK2BiZAr6cpffoH49nAS4/xX3w/YC7v37x4p/2vzUBRl5EZnTA/B6G/B6IAjZGpICvj4vi1ezFc/m368H7UR2EAGNTyrNCYt3JbzayLOCUZ4VIAZ8XxcPpPMDlp7gPQy+zt5QfKkSS9MFpEutOfvORZf8mPCskCnj2orn83Gge4NnLab33sFJ+qBBF4geHC6w8+c1IdgVMftfvceMn82OH5gE+9EiigyT9WCGCxPMrMaPJ755Mlhz9awoFDM8Sjy8FbJfVnrO6Xnshv5v3uPET3sKCUcnnl7egrTL8l6bJldoL+e24x80fnVdnz5gH+JKdOGBF+vNBaCcs8jtQdp+1mpTOfNhGpICv5sfwlwGefc1hDEAgEjOa/A5HAaMPkQIujx0cvSsDPPlLwYH8QDASM5r8Dpbl8bYIT+ZMWLfPWhcE5FR2QCgiM5r8DkUBoxehc0GXr6HnOJk7EIzMjCa/A1HA6EXscoQ3b8vrqYye/BJ6eYMkE2CgF6kZTX4HoYDRi9z1gE1IJsCIKp95kM9I+khntPRvTOnMg7tQwPAn/cMHG/mMpI90RksBR0R+d93jlp9PvlxcXHwNvbSB8nngsLfUz163Qmwo5HcY+jcW8rv7Hjt/+vlsvg/HY819OFIKMCLJKr9SM5r8Dkb/xkF+77jHjp+1dqKsTqqjJqeHDnvJKr5CM5r87oX6jYD83nWPHT87L3eg/OFPF//yB+UE5/XgYbjM8iszo8kvjCC/d97j5o/K09c9rU+fM3mveiR/Zo8eBsttBgidipL8woTcZoDUxRgedn8jLbeHD94JXYyB/AIRCF0PuPWimcuZAcHIXA+Y/AIxCBVw6xLeXNAbCEamgMkvEINEAU/eEGAgCoEZTX6BSEQ+A75sX0L0is+QgFAkZjT5zQDHRJkkUsC3Z8W9xfH7qy+npRFgr3J95CXGRX6Tl/xZQXJ95IVOxPG2GL2qvro543qiEJfX2XPaZE7EQX7Tlvp5McnvgHvc+Mnt85OTcgver/83Oqk9VnghnevDiJ3yza/ITljkN3GpXxmC/A65x42f3D4rumi8k5Xt44jtMo6v1F7Q5DdpaRcw+R12jxs/IcBQlHV+KWDcaTxOuYHJ78B7DH2HIeX8UKJb3o953qNb52u0gYxTL2DtNYiJAgYS5mtG+xptGOPECzhvIifi+Dn0MvZGgJEXiRNxkN+ErfcvBWyK0GfAj38JvZj9EGDkReYzYPKbLPrXNLmdsJ5YyDABRl7EdsIiv0niD2DbRD4D/nxW7TY5evJx899kEWDkRWJGk9900b+2Ce2ENfnwqM7wy2+hlzcIAc5U13OLiwdbZpDkN1UJ96+LB1tuL+hFhu+/VLuaqJPH1J+up5e8Dx9siA2S/CYp2f4lv/ve4/Z/+v3DcZXho3daGXbxmLrT9QTjJL+iM5r8Joj+NU36OODf69fRI6WX0T4eVGc6nmK8xFd8RpPf1CRZwOT3gHvc9Y+f3y5OZKdzTRUvD6srm08xfvIrPKPJb3roX8skC/jz8/kbWF/eaiXYzePqSMenXI4eZsGhkt80Jde/nh5msQL+8rZovXc1eVMUD0MvuQdHj6wbye5mEoTUjCa/CfMYjETIFPA8vcXyQMLrY66mgiAo4OjILxCF4OUIj96t/owAIwQKODLyC0QiVcDru03OfvZAYUdKApwhz/0rVcDk92AupyfuIFPAHeew+xp6ub2kHGBsQQHHRX4DcDtBsRPXA0bymvp1+PD6GnKyo3X8EnGAZB/e/YlcD/hvFz+33q762we9k9k5fISzcMczV9O//h5eiesBk99Dyb1Jk3LHk98g97jxk9UdNpR236g5fIQz0OOpq65fh4+uzGfA5PcwfQv40PpM+c9s8hvoHjd+QoBxiH7PXT7zSwGnoOeO+gfXZ8pvdJPfUPfY/ua3FzN/OC5GP7xYOCsIMAbo99eDz/jGntHkN4h+BXxwfcq90R0e+Q12j+1vro+LDhrn0Kk5fZST1utpxWt+I89o8htErwI+vD4TLmDyG+4eV74778jvkdoL6FQD7Fm/vx7cPrCRB05+Q5Ap4H5JsSnRB/ZwsQt4cnFx8dfjYvTni4bOEYQ1t49zulJ+WhEQeUaT3yAG9u9+85ykJEh+JyxVqQbYMZ5WdhLfCUtVqvmlgNFN4ThgTakG2DGeVnaSPw5YU7L5vXsGU8AucSYsGMezyi6+ZnS6o71zBgeoT5KSHrkC/r38/Ojnb6EXN0y6AfaLp5VdxGY0+T3QXfP38HlOUtIjVcCfHs13oRy9Cr3AIVIOsFu7nlXcP6BCG4D8RhegPtPr35wf0F6ECvh96yiGp4qfJ7l/vJO0q3+9P6AyG4D8CghQn+n1b84PaB8yBXxZvnR+cnHx17fHqsfx5x3gjG2tX/ePp8gWIL8iQtRnYvWb9ePZh0gBl+fTmb9unsxeS49+Cr3M3njAM0J+pzIzmvxKSak+D0Z+p0IFfN5+1XzOqewQAvEtSWwE8ovwyG9J5DjgN+0XzbOX0w+4nigORX4rEscBk18ER34rXI4QaSE8sIwAACAASURBVOKhrHA5QiSJh7JCASN5rj45W0MBA+niLWgkLrVDL8LiLWggXeyEhbSld/KBoNgJC0iXSAFfFUWxOIHOp9nXr0MvszcCnBvvp9+TmNHkF4hD5kQc5WW9j/789evXv55xID9CooAFFkJ+gShkCnjypnUqO71PkAhwBlYfwvHYeQOLzOgg+b19VnQZtEcX+U0eD+EKoXNBT5qTyY40TyXLo5+8ggJeITOjQ+SXAgaH/66Tuxzh3/7+xYsXP/4cenHD8OinbePsdRSw1Iw+PL83ZwMLuOvXD1g+1PEIrpMrYBN4+JO2mV8KOKEZXb6TfTrg9yngzPAAbqCAkYyu+Drv37RmdNnAB+1CndRosYb63UQBIxWd+aWAtddgiENPo5XWaO/ibM7Svx2kCrj6BGnhR86kg+G6Hzzf/Ss1o0Pl92rYm9Drcsqvu2mb04MXjEwBlxcU3XfHx6CYA/lx90S2QmRGh8vv5M1B6c8ov85fOKImUsBr+aWAEZTnZzGJGR0yv9cvXvzT/rfOJ7/ePzpBTaSAL2ehfVyeSGfuW+hl9pZPgIGSxIwmv+FRwCgJXQ1J8/R1bfkEGCjJXA2J/Abm/vA51ISuB9y6nJmqbAIMVGSuB0x+A6OAUREqYL1PfVdlE2BPeNB2kClg8huYpwLO5kGLQegt6JABnnz928XFxc9f9zkWgrmQHM6es5PMW9AUcGB+Cpj87iS1E1aoS4h+edvaG/PJL0NvzlxIDfndTWgnLL1LAK/IZy7QvyiJFHCw97A2Tud+NPCzKSZDWojvXSS2j533oPOZDT4KmPzeRexEHKOXXw++66vqeMST+fl4HpXfjIa9NGc6JIX83knqRBwh8nu4jKYD/Yup2E5YQQ7kL+9n9K71g8/HQ++L+ZAUHq47yeyExYl0wsu/f7N6uCJJqYAvN25Z3vOgU8syI5AXCjhdmdcvehAp4Ocnqx7vFeCua5ldFcWDIXtD5xVgQKKAw+Q3BPKLvCR0OcKuXUF27x5SdIi1doAGXzPa12iRPwoYSJivGe1rtMhfQgU8ebN5RjzegoZvvma0r9Eif3IF/PvFxc/fp5MDrqRyvtG2g08TT4CTwMPUm9imOjy/ATAxksDD1JtUAX96VO89efvs6OO+91xelvRB+9Y3s/4ddpp4ZkYK+KSgP6FNFSK/ATAxUkB++xMq4PeLwxcOurLKZXXqjRd/vij9tT4Tx6CjkAhwAvikfgiZbRUmv4djZthHfoeQKeCyOY/+8XgW4PJN40Gf2q74dLy2S9Xo1cCVY2pYR34HEdlYofJ7MKaGeeR3EJECLt87fjV78VzusNx1NG9/kw/tCh69HPpUwNywjvgOI7G5wuX3UEwO68jvMCIFfF7tKlUHuNxxedB+U+smXy4+vHjx4uXFL3u8EGd2GEd+B5LYXkHzexBmh3HkdyCh6wGXnxvNAzx7Oa33HhbTwzgeoIFkrgdMftELD9BAQueCLqM7D7Dqtc2YH8iLzLmgyS8QAwUMJIwCBtLFW9BAwngLGkiX1E5Yp02AL9mJAwhFaCcs8gtEIFLAV/Nj+MsAz77mMAYgEIkZTX6BOEQKuDx2cPSuDPDkLwUH8mMTD8yeJDYc+cUdeGD2JHMmrNtn7dNncCo7rOHwwX2JbDjyi53I776EzgVdvoae42TuWMPZ6/Yns+XIL7Yjv/sTuxzhzdvy2gmjJ7+EXt4gTBSDyO8BpDYd+cUW5PcActcDNoGZYg/xPYSvjedrtGkgv4eggKGL/B7E19bzNdokkN+DUMDQxUNyEF+bz9dok8BDchCpAv5SXsFo4UfOpAMEITSjyS8QgUwBX58VbZxLFghDZEaT38jGM9rrAA0iBbxyGCEBBoKRmNHkN67xnPZ6QJ5IAV/OQvv4z18b30Ivs7c8Awy/JGY0+Y1qPKaB3RK6GpLi+dtXZBlgOCZzNSTyG894TAP7JXQ9YM3T17XlGOBE8VAEIXM9YPIbT6IFnONDoUCogPU+NVrFrLGCwwfDkClg8hvNeJxkA5PfMITegibAaOPsdaHIvAVNfqNJsoDJbyhSO2HpXUJ0BdPGBPIbjNBOWOQ3lhQLmPwGI3U9YCMvoZk3FhDfcISuB0x+e9irQRMsYPIbjsyJOCZvi9HLr6GXtAdmjgHkNyCRbUl+e9i3Q+lfz+IW8PoR/BzIDx6EoKJuTPLb394tmmABa69BRihgIGEUsA0H1Ghi/YuQIhfw85MujwkwEETcAia/fR3ydyz96xeXIwQS5mtGbx+tcoEduCsV9esVBQwkzNeM3jZa9b8hE9yXGRZQwEDCfM3oLaPVrz4KGHuRK+DJl4uLC+1DGXw9XQUU4mmFjR+B2EY1nF8D3eehgMlvBFIF/HlxSe/HH0MvcAjm0F6CPLFw+GAMQhvVdH4tdJ+FdYiL/MYgdCKON62DGE5DL3EA5tA+Qjy1cPa6OGROxGE6vyb++jSwClGR3zhkCvh89uiNfvjTxb/8QTnBTKI9hHhuIb+RiGxW2/k1UcAGPoeOifxGIlLAV7NH7+n36svJ+0Lz4qLMoj0EeHojvrFIbFjj+bVRwPp7YkdEfmMRKeDZC+iH3d9IYx4NF+D5jfxGI7FljefXSAFnfDQv+Y1GooBvn7VfNF8fFw++h15oX0yk4YIUcOB1woLApjWfXyP9my/yG41QAbfOHrv6nTBm0nBm/sBAB5kCtp1f5idSJVHAq5cTNRhg7EIBWyYwo+3nl+mJRIl8BnxZFK+bb67MfYaE3ehfwyRmtP38Mj2RJpECvj0r7i2O3199OS2NAt4DBWyYxIxOIb9MTqRI6EQcb4vRq+qrmzPNoxgo4L3s3b9s7uhkTsRBfl1ic0cnshPW85OT8kDu+/X/RopXFWVG7WXv/mVzxyaxExb59Yn8xie0F3QXjXeymFF72ucdPvIrQGYvaPLrEPkVQAEjEvIrgQJGHORXAtcDRhzkV4SvrexrtKrIrwgKGFGQXxm+NrOv0WoivzIoYETBlpbhazv7Gq0mtrQMChhImK8Z7Wu0yB8FDCTM14z2NVrkjwIGEuZrRvsaLfJHAQMJ8zWjfY0W+aOAERRbWJav7e1rtBrYwrIoYITE0QvCfG1vX6NVQH6FUcAIpyC/0nxtcF+jFUd+xVHACIb8yvO1xX2NVhr5lUcBIxTiq8DXNvc1WmHkVwEFjEDIrwZfG93XaGWRXw1xC3jyt4suP38PvdDeK8cci4ZtqyHqVie/jrBtNcQtYEMXMpuvHJMMWYk6o8kvEBUFDCSMAgbSJfQW9NuiGD3588XFPxwXo5e8hQUEIvMWNPkFYpDZCeuyKP7z9+bL09CL7I8AIy8iM5r8AlGIFPBVUTxsvjkvitehl9kbAUZeJGY0+QXikCjgyZti9FPz3fVx8YC3sDLCNtUksPXJb9bYppokCvj2WXu3jdXvhDHZguPwQVUCW5/85oz8qqKAcQjOXqeMAsYByK8yobegWx8bXRW8hZUN8qtN5i1o8psn8qtNZCesy9ahgzfPNHejZLoFRXzVSTwC5DdT5FedSAGXx/MfvSu/mnw61jyOnwAHRX71STwE5DdP5FefzHHAV/UZdE6q/7b2qBTHjAuJralP5DEgv1lia+oTuhrS9VlzHrujj6GXOABTDnmRmdHkF4hB7HKEX94+mqX3/pNfQi9vEAKMvEjNaPILhMf1gIGE+ZrRvkaL/FHAQMJ8zWhfo0X+5Ar49+pC3pNvoZc3CAFGXsRmNPkFgpMq4E+P6uuI3j5jJ47ksRXtEHosyG9G2Ip2CBXw+8WFvG+fcRhD6jh80BCZx4L8ZoT8GiJ2PeDi6B+PZwEuT2undyY7Anw4zl5nitT1gMlvJsivKSIFfH1cFK9mL57LU+isnlhWGnPvUOTXFolHg/zmg/zaIlLA59UFvesAr17dWxqT70DE1xiJx4P8ZoP8GiN0NaTyc6N5gPe+oHd5RtoOg85My/Q7DPm1RuZqSCHyGwLT7zDk1xrB6wHPA7z39UQpYH1sP2vkrgd8aH5DYP4dhu1nTUIFPL05o4CBFRQwkK6E3oKudwA57FqkBBh54S1oIF1SO2GdNgG+PGAnjoN3wSTAyIvQTlhh8nsw8ou8iBTw1fwY/jLA5aVF9+/QQ9//IsDIi8SMDpff0uTr3y4uLn7+us+f0eQXeREp4PIP19G7MsCTvxSHHch/ddib0AQYeZGY0QHz++Vta/eN4dc2JL/Ii8yZsFZ2YD7oVHaz54L+fwJ37bN1wLLzMJ4ZfCO2m1Uij0yo/G7sRnk08L6Yh/thu1kldC7o8jX0InOHncz9+sWLf+q9KhTwuvHcsFux3cySeWTC5PfquLyDkxe1R1WbD3s7m3m4F/JrltjlCG/eloEbDX/XKSjvE3E83qOBed1imNRDEyC/5d/Ro3etH3w+HngUofv87oX8GiZ3PWATnM/E8XiPBia/liX02Fxu1G1ZyYN26UhotGaQX8tEjgP+X3qXT1njfCruU8DE1zSJ44DD5LfrGMKrgbt0MRcHI7+mCZ0J6+idjQ72PRnH4+ENTH5tkzkTVoj8dh1CuPuwQvbhOBybzDahAp55HPTT39vnJ4/3OCDY92zcr4DjrlNprx2zUZEp4BD5pYA1sMVsE/kM+HN99MHoyWE7QLfteUYO39NxnwKOz9r6pEViRofJ7/yMliuMvQXNNIQwqcOQPjyqM/wy0FvRFPAeTBawuRVKi9BhSCHye77RtuXHwoPOaxl1tMxDiJPbC/r3D8f1cYRBPg6mgPdhun/NrFJSxGb04fm9nt3Bg/Yf0Tdvhp7WI+ZomYeQJ3oY0s3bOsNP4uzR0QMFbO1ZxuAqJUVyRh+a38vqj+gXf74o/bU+E8ewE8tGHC0TEQqkjwOuzgUb4HqiFPBe+j/HCG0pk++Kp0R4Rh+W30/Ha7tUjV4NuwMKuC/vz3SpEC7gyefnFLCm/v1LASdBdkYfmt/Jh3YFD/9EOd5oM5uI7C+eCNECrtIbZk8sCnhfvZ5fxPKb2fOePMkZHSS/ky8XH168ePHy4pc97oUC7of+TYVcAS8uRBbmWCQKOCa5/Ob1vKdA7JEKm989UcC90L/JECrgxe4bj991/ascJmYfkvnN6GlPhcxDlX9+cypg+jcdIueCnn/wcz/UQcD7Y2b2IJrffJ72dEicC9pFfvOZiPRvQsRORRnyNFj7Y2r2ILuRcnnaUyJ1Ksrs85tTAWuvAXoTKuCwJ4LeH3PTnjye9bTIFLCH/ObSv0iJyFvQP6u/dbVAAVvEk97+JN6CdpJf+hfiRHbCen+kvO9GgwJGXiRmtJv8Ur8QJvIXcMdlUJRQwMiLxF/A5BeIQ+gz4ADnvgqCAO/AxkmQzGfA5DcBbJwECf0FTIDt4+iFFMn8BUx+7SO/KRL5DPhy4FU/42GOblOQ3yRJPGrk1z7ymyaZM2F9Oi6O/vw19JL2wCTdgvwmSuRhI7/Wkd9EibwF/fcv/rByETK9N7SYpd2Ib6ok3oImv9aR31SJnQmLABtGfpMldSYs8msY+U2WSAE/P1n1mADbwmZJlkQBk1/j2CzJEr0esD5mKvLia0b7Gi3yRwEDCfM1o32NFvmjgIGE+ZrRvkaL/MkV8O8XFz9/n06+hV7eIAQYeRGb0eQXCE6qgD89qveevH12pHldUQKMvAjNaPILRCBUwO8Xhy/cPlM9sTsBXsHmSJ7MQ0h+TWJzJE+mgC9n6T36x+NZgCdviuKB3uVFmbFtHD6YPpGHkPyaRH7TJ1LA18dF8Wr24rk8gL9M8OvQy+yNGbvE2etyIPEYkl+LyG8ORAr4vDqZex3g6ZXmmd09TtktVxknv1mQeBDJr0HkNwtClyMsPzeaB3j2clrvPSx/c3Y8t/5z4psHmcsRkl9ryG8ehM4FXUZ3HmDVy3u7m7XjcXcDk99MyJwLmvwaQ34zQQFnbTze0sDeNkS2KGCX2BCZ4C3orG0tYGSCt6CBdEnthHXaBPiSnTjEjMc0cOaEdsIiv0AEIgV8NT+Gvwzw7GsOY5BCAWdPYkaTXyAOkQIujx0cvSsDPPlLwYH8cijg7EnMaPILxCFzJqzbZ8USp7ITQwFnT2RG55df8gAThM4FXb6GnuNk7oI2+tfbBsiezAOaWX7TfUlKfjMjdjnCm7fl9VRGT34JvbxBvM3f9QLm8MHcSD2gOeU33TeFyG9u5K4HbIK7+bvyXMPZ6/Lj6xENMtpkP5Yhv/mhgDNH/+bN10PquoDJb4ZkC/jTcVE8yeAzpKTw9nPORB/ULPKb6p6J5DdHQgX8+aw8hvAyn70o00N+syTzqOaU30QLmPxmSaaAL6sj+cvLipb0TiXru4C11wARiDysWeU32QLWXgNEIFLAZXJnqa1iXB7QcBp6mb0xi5EXiRmdV34TLWBkSaSAL6uz55TRfcgFvYGAJGZ0Zvmlf2GG4NWQytfRr7mcGRCQ3NWQsskvBQwzBK8HfFnMr2qWeoABM+SuB5xPfulfWCFYwOfF/LreyQcYsEKugDPKL/0LI+QKeP4REhf0FuZwyJ6IFXBe+U2nfslv1oQ+Ay5eLz5CKl9IJ74TR1I4fDBvMp8Bk18t5DdvUntBH/3yd9U7WNUFRbmgtxTOXpc7ob2gya8K8ps7kQJeXE70tP5K7wW0twCT3+xJPMDkVwn5zZ7MmbDqc+g8+F4F+KnaJ0jeAkx88yfyEJNfFeQ3f0Lngp58fvFjeSXR2/+ie0FRVzOa/Dog8xiTXwXk1wEuR5gvV4P1yteD7Gq0rgbrFQUMJMzXjPY1WuRProAnXy4uLlTfv5oSYORGbEaTXyA4qQL+fFbvSFk81ryeNwFGZoRmNPkFIpAp4MnbYknvYmYEGLkRmdHkF4hCpoDPZ7kd/fCni3/5g3KCXQTYxSBRE3mwya8kF4NETaSAr2ap/c/10YOT9/U1VZR4mNscveCJxINNfiWRX09ECnjl9LGcSzYu8uuKxKNNfgWRX1eErobUetGcx9VUzCK/vshcDYn8SiG/vgheD7jzO2HZz27y64zc9YA7vxOW/ewmv84IXY6QAMsgv97IXI6Q/Mogv95IfQa8vILZFZ8hxZP7+LBO6DNg8isi9/FhndTlCJsXzasvp6UxwZEXocsRkl8gApnjgG/OiqN3zVd6+SXAyIzIjCa/QBRxC/j2+UntUXkA/+z/5f/unzzmMyQgiKgzmvwCUUUu4GdFF3biAMKIW8DkF4iJAs5CruPCXSjgHOQ6LtyF6wHngKMX3PL1yGc6WvLrFgWcvoL8+uXroc9ytOTXMQo4eeTXM1+PfY6jJb+eCRXw5MvFxcUvaqeQbWQ41YmvazKPPvmNhvy6JnIqyg/H8703Ri+VM5zfZCe/vkmcipL8xkN+fRMo4N+Oi6XRHw+688mH5yc//Gn5LDD0xLT5zfb8RoQh4j/+IfN7qPxme34jwhDRC3hyXtRH77+oj+Y/6Fpm8+eC5QtxChi+xZ7RQfN7MPKLvEQv4DK/91/NQ/v5rDjkVO6XzQvxxbMABQzfYs/okPk9HPlFXmIX8NUssU+Xr5kn74v2lVWGuZ79/Xv07uvX8iOp+QlpKWD4FnlGh8xvAOQXeYlcwJM366+Yz/d/E+tycdObs0UDU8DwLe6MDprfAMgv8hK5gK82zltXnt1uv5fQ5ZPB6+WX1dMABQzf4s7okPkNgfwiL5ELePZ6+XTt3y/3/RRp7aqk1b34LeB8RoJDxJ0HIfMbQj6zPp+R4BBxC3jWk6Of1v79+njP97BWyrZ8IX7quIA5fBCVqPMgaH5DyGbWk19Uol8NaaMfh3bmlhvOngdmzw1OC5iz12Eu9tWQwuU3hEymPfnFXEIF3PoMuFR+PPXRZwGTXyxQwOkhv1hIqIDXP32afXvvXz0WMPFFgwJODvlFI6HPgKvjgJ98W37//q6rgxcd9lqyKVkMAoHwGXBqyC+WEtoLuj4TVrtv3zstYO01gB3sBZ2aHMaAUBI6Dnjm0/Hq3c2+d/gWNNDgOGAgXZELuIxryDPpTD7/uHLjyftjChiOxZ3RofN7KPKLvEicC7r1JhbnkgVCEjgXNPkFIhG5GtLRu/k3XE0FCEriakjkF4hD7nrAPzyvryf6NMgbWLfPTx7vcTAEAUZexK4HHDa/eyK/yEv0Ap5Ofztu7YQ8+mOYpex5NGLKAU553RFL/FkRJb97SjkDKa87YhEo4OnkwyLCo5ehXj77K+AsDqFCaAKzIkZ+95RwBsgvOkgU8Mzky8XFxc8B0+utgPM4hBnByUyL4PndU7IhIL/oJFTAwTkrYPKLbr7mRaqjJb/oRgGngPhiC18zI9HRkl9sQQEngPxiG19TI83Rkl9sQwEnIM21hgRfcyPN0aa51pBAAQMJ8zWjfY0W+Uu1gPdEgJEXXzPa12iRPwoYSJivGe1rtMgfBQwkzNeM9jVa5I8CBhLma0b7Gi3yRwEbltbaQoOvOZLWaNNaW2iggO3i8EHcydccSWq05Bd3ooCt4ux16MHXJElotOQXPVDARpFf9JHOLLl9VnQZdDh/OqMlv+iDAraJ+KKXdOaJqwImv+iFAjaJ/KKfhCbKzZmbAia/6IcCNimV9YS2lGbK5E1RnB50D6mMNpX1hDYKGEhYUjO6bODXh9xBUqMF7kQBAwlLa0bveQ2VRlqjBe5CAQMJS2xGXx32JnRiowXuQAEDCUtsRk/eDPgTuGufrZgrB0ijgE2xvn6wJrUZc/3ixT/1/d30Ctj6+sEaCtgS808wsMbXjDE+WvKLgShgQ8gvhvI1ZWyPlvxiKArYDvKLwXzNGdOjJb8YjAI2g/xiOF+TxvJoyS+Go4CtIL/YQ6Kz5vb5yeM9Dgg2PFryiz1QwFYYXjXYlei02fOMHIZHa3jVYBcFDCQs0RmdXwEDe6CAgYQlOqMpYGBKASdnPKO9DrAj0RlNAQNTCjgx4znt9YAVic5oChiYUsD6hqzSeEwDY4XBGd1HPgVscJWQDgpY2ZCjF8ZjGhir7M3oXrIpYI4+wiEoYFXDTi9PAWOdtRndUyYFbP/yELCNAta0f//SwKgYm9GRGRst/YsDUcCKBsaXAsYGWzM6NlujpX5xKApYz9D8UsDYYGpGR2dqtPQvDkYB6xm6MhQwNpia0dGZGq2plUGaKOCE0L9Yl/aMHsrXaJE/CjghFDDWpT2jh/I1WuSPAk4J/Ys1ic/ogXyNFvmjgJNC/2JV6jN6GF+jRf4o4MRQv2hLf0YP4Wu0yB8FLM/ESiAPviaTidGaWAnkgQJWWAcDK4FM+JpMFkZLfhEOBSy+BvrrgHz4mk36oyW/CIkCll4B9VVATnxNJ/XRkl8ERQELL9/05kFyfE0o7dGSX4RFAcsu3vTWQXp8zSjyi7xQwI4Wj/z4mlLkF3mhgIGE+ZrRvkaL/FHAQMJ8zWhfo0X+KGAgYb5mtK/RIn8UMJAwXzPa12iRPwoYSJivGe1rtMgfBZzxYpE/X1OL/CIvFLDIUk1vFCTM19Qiv8gLBSywTPKLWHzNLfKLvFDA8RdJfhGNr8lFfpEXCjj6Ek1vECTO1/Qiv8gLBRx7gaa3B1Lna36RX+SFAs5sgfDF1wQjv8gLBQwkzNeM9jVa5I8CBhLma0b7Gi3yRwEDCfM1o32NFvmjgIGE+ZrRvkaL/FHAQMJ8zWhfo0X+KODEFwTffE008ou8UMCRlmN6MyAbviYa+UVeKOAoSyG/kOFrppFf5IUCjrEQ8gshvqYa+UVeKOAIyzC9CZAVX5ON/CIvFHD4RZjeAsiLr9lGfpEXCjjBRQALvqYb+UVeKGAgYb5mtK/RIn/pFvCXi5+/Db6RlQCPZ7TXATmwMqNl+Bot8pdcAX/9Xv538uG43Ffx6N3AW9sI8HhOez2QPhszWoqv0SJ/aRXwzduydX+aTs+LuafD7sBEgMdjGhiBmJjRYnyNFvlLqoCvqz97i9FPV7P/Pn7xovz2dNA9RAxw77sej2lghOKrkizkFwgnpQK+fTYr3JNHs7+Bz2YlPPvB5H1Rf9FbvJT1P3qBAkY4vnrDQn6BcFIq4MuiuPdx/nfw6+onkzcD/wSOlbIBJ88Zj2lgBOOrNwzkFwgooQIu27bq3VkRP/he/+xq+WUvkWI2JL8UMALyVRwG8gsElFAB3z4r7v1afjH7E/jh+s96ipOzQfGlgBGQr+YwkF8goBQLePaFqQIell8KGAH56g4D+QUCSquA6z2uJv/95D/O33ee/TFsoYAH/Tr9i3B8lYeF/ALhJFTA5cG/63tcXRbNH8O9WMgaBYxwLMxoOb5Gi/ylVMBXGwcd3Twzshf0IPQvgjExo8X4Gi3yl1IBl7tBF/9xudNzdT7KXTtBFx2ird0A9C9CsTGjpfgaLfKXUgFPb8+K9ke+5Yk5dp6Hw2oBczEGhGJlRsvwNVrkL6kCLv/mXS3go4/D7oAAIy++ZrSv0SJ/aRXwqsn/Gli/gYfLswHU+ZqE5Bd5SbmA9xByuGbez4ZjviYh+UVeKOC974n8Qp+vWUh+kZdUC/j2+cnjIWfgmAs2XPILE3xNQ/KLvCRbwAPPQTkXarjEFzb4mojkF3mhgPdBfmGEr5lIfpEXCngf5BdG+JqK5Bd5oYCBhPma0b5Gi/xRwEDCfM1oX6NF/ihgIGG+ZrSv0SJ/FDCQMF8z2tdokT8KGEiYrxnta7TIX6oFvKcDh0v+YYyvKUl+kRcKeNCtTQ8ODvmakuQXeaGAB9yW/MIaX3OS/CIvFHD/m5JfmONrUpJf5IUC7n1L0wODU76mJflFXijgvjc0PS545Wtekl/khQKOfEMgJl8Tk/wiLxQwkDBfM9rXaJE/ChhImK8Z7Wu0yB8FDCTM14z2NVrkjwIGEuZrRvsaLfJHAQMJ8zWjfY0W+aOAA98AkORrgpJf5IUCvuP3TQ8H7vmaoOQXeaGAd/42+YVtvmYo+UVeKOBdv0x+YZyvKUp+kRcKeMfvmh4KfSijPgAAEa5JREFUMKWAd/2uq02DJFHA23/V9EiAkq9ZSn6RFwo4wK8CWnxNU/KLvFDAQMJ8zWhfo0X+KGAgYb5mtK/RIn8UMJAwXzPa12iRPwoYSJivGe1rtMgfBaxhPKO9DsiCkRktxNdokT8KeI9fOdB4LvZy4ICvSjKRXyAYCnj9F6IHeDymgRGKr76xkF8gHAp47d8F+5cGxsHS6pvJh+cnP/zpe/P97bPi3q8Dbm8gv0BAFPDKvwrElwJGQEkVzm/HZcSK0ctFBYctYOoXqaGA2/8o3L80MA6VUuVcFgsP5g0ctIDpXySHAu75j6FQwAgpoc65nv39e/Tu69cP5f/r2g1cwAetHiCPAhZGASMk/Rnd2+XiL9+bs0UDh/4MGEgLBSyMAkZI+jO6r8mboni9/LLqYgoYvlHA0uhfBGRgRvfULtuygR9OKWB4RwFLo4ARkIEZ3dNK2c6+KU4pYHhHAYujfxGOhRndz2rZXh8Xo58oYDhHAcunmv5FMOlUUusz4NJVUdz7GKSA09kEwBoKeKpw9CD1i0ASap/L+nPf1rf3/jVAAXP0L9LlvoA5eh8pS2j2lscBP/m2/P59dU6OHQVcdOj6nShrCwjwXsDkF0lLafpervXt+8MLmPwiac4LmPgibUlN4E/Hq307+/6wt6DJL9Lmu4DJLxKX1gyefP7x+8r3748PKWDyi8R5L2Cl9QDC8DWFyS/y4ruAgcT5mtG+Rov8UcBAwhKd0bfPTx4Pee95LtHRAltQwEDCEp3RQ8/AMZfoaIEtKGAgYYnOaAoYmFLAQNISndEUMDD1WsDkGJlIdCofVsCJDhpY57KAOXwQuUh0Kh9UwOQXuXBYwJy9DvlIdC4fUMDkF/nwV8DkFxlJdDLvX8DkFxlxV8DEFzlJdDrvXcDkFznxWMBARrQzJUl7WwOhBc9I6DsMSXtjA6FpZ0qS9rYGQguekdB3aJnC0x+LzGiZvuozAmMb0NjqWFsfVkdAloPaxsdzto9FehlmVoxtQGOrY219WB0BWQ5qGx/P2T4W6WWYWTG2AY2tjrX1YXUEZDmobXw8Z/tYpJdhZsXYBjS2OtbWh9URkOWgtvHxnO1jkV6GmRVjG9DY6lhbH1ZHQJaD2sbHc7aPRXoZZlaMbUBjq2NtfVgdAVkOahsfz9k+FullmFkxtgGNrY619WF1BGQ5qG18PGf7WKSXYWbF2AY0tjrW1ofVEZDloLbx8ZztY5FehpkVYxvQ2OpYWx9WR0CWg9rGx3O2j0V6GWZWjG1AY6tjbX1YHQFZDmobH8/ZPhbpZZhZMbYBja2OtfVhdQRkOahtfDxn+1ikl2FmxdgGNLY61taH1RGQ5aC28fGc7WORXoaZFWMb0NjqWFsfVkdAloPaxsdzto9FehlmVoxtQGOrY219WB0BWQ5qGx/P2T4W6WWYWTG2AY2tjrX1YXUEZDmobXw8Z/tYpJdhZsXYBjS2OtbWh9URkOWgtvHxnO1jkV6GmRVjG9DY6lhbH1ZHQJaD2sbHc7aPRXoZZlaMbUBjq2NtfVgdAVkOahsfz9k+FullmFkxtgGNrY619WF1BGQ5KAAArKOAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKDAWQF/fl4Uxf2X3+WWOPlwUi7yyUe5RVZun937VWZJN2+Pi2IkPkDBEZa0Hse8WNyKsvNoK60Y7WBky0xtzpswXBXw5E1RG72WWuSn4/kii6dSi6zMhioUnsUIR38UWVxDboQlrccxLxa3ouw82korRjsY2TJTm/MmEE8F3PTvjFADXy2XWDyUWWRlcl4IhedKfJvW5EZY0noc82JxK8rOo620YrSDkS0ztTlvQvFUwJez15flu8//96woHoi8C337rCiOfpl98WW2yNFPEousVC81RMJTjfBjPUDRd4TFRljSehzzYnErys6jrbRitIORLTO1OW+CcVTAsxk1f/Rmj6jM43jVvGIrp7PYi7fP1Ts2IuG5XLyWKQd4KrDAmuAIS0qPY2YMbkXhebSVUox2sLJlpibnTTiOCvj6uHnwLoXe6DlfLme2dJm/uqc3s9eJxZMzkfAsX9QIDlB0hBWVxzE75rai+DzaRidGO5jZMiVz8yYkRwXcci7/Scvsr26hqVO+0/5KaAeK1qhaTyKxSY5wndzjmDMbW1FzHq3QidEOZrbMGhvzJiSXBTx7GMVnlmABj55+l9qD8ar1lpDcqxrJEa7L7ylAg42tqDmPVujEaAczW2aNjXkTksMCnnw4VpjjV2KfXvxezlC5Am4+sZJ6X192hOvkHsec2diKmvNohU6MdjCzZdbYmDchuSvg8+pgu1fSixXb72tOKDztZ4sr2d1HdJ4epB/HPFnaihZqRjFGO1jYMqsszZtAfBbw/VfS72OcC790o4DjkH4c82RpK1qoGQq4H0vzJhBvBTz57yfPyx3sZT9JkD+mnQKOskwz5yZIma2taKFmKOA+bM2bQLwVcKXcyV70vFRvxA8gp4DjLDK7t8DkGduKFmqGAu7B2LwJJPMCLk+iUll95GJ+lrC5yJvYJ3DpGCUFHF70xzFDCmkYtjomaoYCvlum6fNZwOWMjzXLNxZ5fVwUR1Enst7TiuLum+JPD/EfxwwppGHQ6tioGXN7QVcsbJlGrulzWsARX2auL3IWqOJp3E+cVQtY6wBG6acHgccxQwppGLI6Uxs1Y+444IqFLbOQbfoyL+Bt5N7nKWeOwltKWZ8Ja7E8yacHpccxMwa3ooWaMXcmrIqFLTNncN4E4qiA2287i73MvFT64EIoPIonsZV9etB6HPNicStaqBlz54KuWNgyNYvzJhBHBTyb2otH8VLwarn3PkosaJ1UePQu4yL69KD2OGbF5FY0UTP2roY0NbJlSibnTSCOCrjajb08A8fNW6k3NPTO3CIVnsW1OuUvZCr59JDhGXgU2NyKJmpGL0Y7mNgyU6vzJhBHBTy9WeyBUUgdBnxZtEnOIrHwXC3HJ7vviOTTg97jmBObW9FGzajFaAcbW8bqvAnEUwHXV7msyOxQV/7NnXsBT387no/ujyKLawg+PSg+jhkxuhWN1IxWjHYwsmWMzptAXBXwdPr5+ewhvP9E6AOF22dqU0cwPDdvZ88dI6lt2hAcoeLjmBGjW9FIzWjFaAcjW8bovAnEWQEDAGADBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAtVwWjdHJy28Dbnn7rHjwfTqdvCnu/dr5Czfv+t3DdrP7Hv00YJW2unNVgCSRXwRAAWtpBbjM8B/73/KOAE/eF6f97mG7QAHusSpAksgvAqCAtawGuChe977lHQG+KswEuMeqAEkivwiAAtZyuczs5NNxse3tqA53xI8AA9GRXwRAAWu5bL9ovj4e8BKaAAPayC8CoIC1rAR4el4UD/vekgAD2sgvAqCAtawG+LIO8PksWJ8fFcXjj9Pyna2TYvbluyZqN2+LYvT0+8ZnSJNPs5uMnpS3KTOz/EjqjntozF7AP5zePC//rd6dsw5w6243761a/OTD2q98fr78lWZVZne/WFwV6Y3Fda0qYBn5Jb8BUMBatgX4U7VT5U/121qVo4/N75Qe/L+1AF+fzffELO+vHeC77qFRJmr+y/UL5zLA/3zeutvNeysX/7+PW0ubuTlr/0qzKq3X4+flVxuL61hVwDTyS34DoIC1bLyFdVr97341kx+2pvRi/45mt8t/txrg2cvhuTINrQDfeQ+N2W/++zetO6kC/Gj1xuv3NnlTLNU5XK5J9SvLVblcvJVVv3TfWNzmqgK2kV/yGwAFrKVzJ47yReuD6jVkGYajd/M9LB8ufjD7p/L7lQDPbjN6Vb96rT6GWnxwc/c9rCy++afyV6t0jl59n07+UtR3t3Fvy195P/+Vak1ezn7w4XhtVZr3sOofbCxu484B48gv+Q2AAtbSCvDX98fzRJ03ybpqvprN7vJl5uXiB9fHKwGe//Pyi0Vq7r6HxvIHs6/KXy3Tee/jYj0fdt1b9Su/tn9lftvWV81OHOfNa/jFm3Mri9u4c8A48jslv4ejgLWsHchfT9vzZrfD8+VErmLQ+hzmciXAV81rzvlTwlXzevaue2gsozdfgzKdp82/lb+7fm8dv3K5fPU7H0cT4Kt61Wa3KX9xY3Ebdw4YR36Xv0h+90YBa7nsyG85n+uX1e39HKudDmc/WHy6Ms/LPMCrn0VNmwj0uIfG6m6OD1cOY6j/bePeNn9lufKLX1mmcXbz+Wvs047Fbd45YBz5bRZHfvdHAWtpBfh+s/d+81KytT9EUX3i05rkq4cxnK+/57MM8F330GilZks6N+5t81faxx7OI3rV+oOgfrKpfmN9cZt3DhhHfpvFkd/9UcBaNl75lpo0tnYrrOd061VnvwD3uIfGaqK60rlxb50BbvaAnC9gGeDqPaz5O1gbi9u8c8A48tvclPzujwLWcmeAV+fx4FfQPe6hcfcr6I17G/gKunoPa/4O1sbiNu8cMI78Nl+S3/1RwFp2B7j1gc90/Qe9P0O66x4avT5DWjvAb+dnSFfF6mdI9XtYl8ujBtc/Q+LoQaSF/Da/SH73RwFr2R3gch/FlX9u/WDbXpSre070uIfG7JaLBNUp7Hp5vLa6mwHesRdl+Tujf36zPHhhZXGbdw4YR36bxZHf/VHAWnYHuPzne8sT0J22Qlfu8tAK8PKYgLXU3H0Pjevm+Pl5tjrTuXpvm7+y4zjC6tf/07P5dxuL27hzwDjyOyW/h6OAtdwR4DJk5Xlqpr+/rw9yqM4288t0+nnLmXTKE9pU3y+Oir/7HhrVXhRPPq6cJmctnRv3tvkrK2fSqX5w1VrOZXH/uL2HSntxG3cOGEd+yW8AFLCWOwLcnIm1dLryg/+07VyyzS4SRXXfd95DY3aT+4s9GRcnil1P5/q9dfzK2rlkW6sy/3q+0I3Fba4qYBv5Jb8BUMBa7grw9Op4bUp/qn+wcTWV5hom9e/VZ1k/7XEPjfLTp3mGjn6d38d6OtfvretXVq+m0l6V9TPvrC6uY1UB08gv+Q2AAtZyZ4Cnkw/lJTbvv2yuuXnz9nj79UTra5BW376dffe0xz006oMJZum7/2p+Fx3pXLu37l+ZX0+0GUKzKu2xbSyua1UBy8gv+Q2AAsbKgX3RtJ40JBYHuEF+k0UBQyZRrd0jCTAQEPlNFgUMkUR9Xh47SICBkMhvsihgxE/U1eruGQQYCIj8JosCRvxEXa8euUiAgYDIb7IoYMRP1O1ZUTxd7rZJgIGAyG+yKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUEABAwCggAIGAEABBQwAgAIKGAAABRQwAAAKKGAAABRQwAAAKKCAAQBQQAEDAKCAAgYAQAEFDACAAgoYAAAFFDAAAAooYAAAFFDAAAAooIABAFBAAQMAoIACBgBAAQUMAIACChgAAAUUMAAACihgAAAUUMAAACiggAEAUPD/AdrsxnbNbgcdAAAAAElFTkSuQmCC" class="img-fluid figure-img" width="960">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mating-inbreeding-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: Changing pairings preserves predicted mean additive merit under equal contributions, while changing offspring pedigree inbreeding.
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-validation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 1: Phenotype predictions under two declared validation targets. The dashed line denotes equal predicted and observed values.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>This does not make between-family mating a general optimum. In larger pedigrees, family labels can conceal shared ancestors, contributions may differ, and capacity or logistical constraints can make some pairs unavailable. Here the explicit pedigree, not the labels alone, justifies the difference.</p>
 </section>
-<section id="verify-offspring-diagonals-through-the-recursion" class="level2">
-<h2 class="anchored" data-anchor-id="verify-offspring-diagonals-through-the-recursion">4. Verify offspring diagonals through the recursion</h2>
-<p>Add each plan to the pedigree and calculate the full relationship matrix. The helper requires parents before offspring and explicit <code>NA</code> for unknown parents. We reuse it without calling its data-download or model-fitting functions.</p>
+<section id="evaluate-a-selected-shortlist-separately" class="level2">
+<h2 class="anchored" data-anchor-id="evaluate-a-selected-shortlist-separately">5. Evaluate a selected shortlist separately</h2>
+<p>Within each validation pool, select four eligible candidates by the phenotype-prediction score. For this demonstration the pool represents one parental role, with equal intended contributions. Use IDs to break ties. Compare the shortlist’s mean true genetic merit with the whole pool and with an explicitly labelled oracle shortlist using truth.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>extended <span class="ot">&lt;-</span> <span class="fu">lapply</span>(plans,<span class="cf">function</span>(plan) {</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  children <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id=</span>plan<span class="sc">$</span>animal,<span class="at">sire=</span>plan<span class="sc">$</span>sire,<span class="at">dam=</span>plan<span class="sc">$</span>dam)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  matrix <span class="ot">&lt;-</span> <span class="fu">mouse_relationship</span>(<span class="fu">rbind</span>(pedigree,children))</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  offspring_F <span class="ot">&lt;-</span> <span class="fu">diag</span>(matrix)[plan<span class="sc">$</span>animal]<span class="sc">-</span><span class="dv">1</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  expected_F <span class="ot">&lt;-</span> A[<span class="fu">cbind</span>(<span class="fu">match</span>(plan<span class="sc">$</span>sire,<span class="fu">rownames</span>(A)),</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">match</span>(plan<span class="sc">$</span>dam,<span class="fu">colnames</span>(A)))]<span class="sc">/</span><span class="dv">2</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">max</span>(<span class="fu">abs</span>(offspring_F<span class="sc">-</span>expected_F))<span class="sc">&lt;</span><span class="fl">1e-12</span>,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>            <span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(matrix,<span class="fu">t</span>(matrix))),</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>            <span class="fu">min</span>(<span class="fu">eigen</span>(matrix,<span class="at">symmetric=</span><span class="cn">TRUE</span>,<span class="at">only.values=</span><span class="cn">TRUE</span>)<span class="sc">$</span>values)<span class="sc">&gt;-</span><span class="fl">1e-12</span>)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">A=</span>matrix,<span class="at">F=</span>offspring_F)</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(<span class="at">offspring=</span>within<span class="sc">$</span>animal,<span class="at">F=</span>extended<span class="sc">$</span>Within<span class="sc">$</span>F),<span class="at">digits=</span><span class="dv">3</span>,</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>             <span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>shortlists <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind,<span class="fu">lapply</span>(<span class="fu">names</span>(splits),<span class="cf">function</span>(label) {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  test <span class="ot">&lt;-</span> observed[<span class="sc">!</span>splits[[label]],]</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  prediction <span class="ot">&lt;-</span> fits[[label]]<span class="sc">$</span>prediction[test<span class="sc">$</span>animal]</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  true_u <span class="ot">&lt;-</span> truth[test<span class="sc">$</span>animal]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  selected <span class="ot">&lt;-</span> <span class="fu">order</span>(<span class="sc">-</span>prediction,test<span class="sc">$</span>animal,<span class="at">method=</span><span class="st">&quot;radix&quot;</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  oracle <span class="ot">&lt;-</span> <span class="fu">order</span>(<span class="sc">-</span>true_u,test<span class="sc">$</span>animal,<span class="at">method=</span><span class="st">&quot;radix&quot;</span>)[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  selected_mean <span class="ot">&lt;-</span> <span class="fu">mean</span>(true_u[selected])</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  oracle_mean <span class="ot">&lt;-</span> <span class="fu">mean</span>(true_u[oracle])</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(oracle_mean<span class="sc">&gt;=</span>selected_mean<span class="fl">-1e-12</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">split=</span>label,<span class="at">selected=</span><span class="dv">4</span>,<span class="at">pool_mean_truth=</span><span class="fu">mean</span>(true_u),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">selected_mean_truth=</span>selected_mean,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">selected_difference=</span>selected_mean<span class="sc">-</span><span class="fu">mean</span>(true_u),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">oracle_mean_truth=</span>oracle_mean,<span class="at">oracle_gap=</span>oracle_mean<span class="sc">-</span>selected_mean,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">oracle_overlap=</span><span class="fu">length</span>(<span class="fu">intersect</span>(test<span class="sc">$</span>animal[selected],test<span class="sc">$</span>animal[oracle])))</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(shortlists,<span class="at">digits=</span><span class="dv">3</span>,<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 13%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 14%">
+<col style="width: 9%">
+<col style="width: 12%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">offspring</th>
-<th style="text-align: right;">F</th>
+<th style="text-align: left;">split</th>
+<th style="text-align: right;">selected</th>
+<th style="text-align: right;">pool_mean_truth</th>
+<th style="text-align: right;">selected_mean_truth</th>
+<th style="text-align: right;">selected_difference</th>
+<th style="text-align: right;">oracle_mean_truth</th>
+<th style="text-align: right;">oracle_gap</th>
+<th style="text-align: right;">oracle_overlap</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">W1</td>
-<td style="text-align: right;">0.25</td>
+<td style="text-align: left;">Represented</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">-0.013</td>
+<td style="text-align: right;">0.907</td>
+<td style="text-align: right;">0.920</td>
+<td style="text-align: right;">0.988</td>
+<td style="text-align: right;">0.081</td>
+<td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">W2</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">W3</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">W4</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">W5</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">W6</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">W7</td>
-<td style="text-align: right;">0.25</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">W8</td>
-<td style="text-align: right;">0.25</td>
+<td style="text-align: left;">Withheld</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.144</td>
+<td style="text-align: right;">0.639</td>
+<td style="text-align: right;">0.495</td>
+<td style="text-align: right;">0.824</td>
+<td style="text-align: right;">0.185</td>
+<td style="text-align: right;">2</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p><strong>Question 2.</strong> Does the between-family plan eliminate inbreeding in every future generation?</p>
+<p>The oracle gap measures how far the selected mean falls below the best attainable mean in this same candidate pool under the unconstrained top-four rule. It uses information unavailable in real selection. It is not a comparison with an implementable alternative policy.</p>
+<p>These are selected-parent differences, not offspring gain per year. Offspring response additionally depends on both parental roles, contributions, mating, inheritance and the reporting base, as shown in Practicals 7–9. High overall correlation need not produce the best shortlist, because errors near the selection threshold matter.</p>
+<p><strong>Question 2.</strong> Why can phenotype prediction reward family environmental effects?</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Suggested answer">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -4498,63 +4535,17 @@ Suggested answer
 </div>
 <div id="callout-2" class="callout-2-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>No. Offspring share ancestors and become related even when their own inbreeding is zero. Future decisions need the updated pedigree and actual contributions. A zero value for this generation does not establish a sustainable long-term programme.</p>
+<p>Shared family environment helps predict additional phenotypes from that same environment. It is not inherited additive merit. The family predictor can therefore improve phenotype association while ranking genetic merit imperfectly. Genetic evaluations need a model and data that distinguish genetic and environmental sources, with validation matched to their use.</p>
 </div>
 </div>
 </div>
-</section>
-<section id="distinguish-pedigree-inbreeding-from-marker-heterozygosity" class="level2">
-<h2 class="anchored" data-anchor-id="distinguish-pedigree-inbreeding-from-marker-heterozygosity">5. Distinguish pedigree inbreeding from marker heterozygosity</h2>
-<p>Pedigree <span class="math inline">\(F\)</span> is an expectation about identity by descent on the founder base. Observed marker heterozygosity is a realized genotype statistic. At a biallelic locus, the model</p>
-<p><span class="math display">\[P(AB)=2p(1-p)(1-F)\]</span></p>
-<p>connects them only under a specified allele-frequency and identity-by-descent model. It does not turn any observed heterozygosity deficit into a pedigree inbreeding estimate.</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> .<span class="dv">5</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">F=</span><span class="fu">c</span>(<span class="dv">0</span>,.<span class="dv">125</span>,.<span class="dv">25</span>),<span class="at">p=</span>p)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>model<span class="sc">$</span>expected_heterozygosity <span class="ot">&lt;-</span> <span class="fu">with</span>(model,<span class="dv">2</span><span class="sc">*</span>p<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>p)<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>F))</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(model<span class="sc">$</span>expected_heterozygosity,<span class="fu">c</span>(.<span class="dv">5</span>,.<span class="dv">4375</span>,.<span class="dv">375</span>)))</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(model,<span class="at">digits=</span><span class="dv">4</span>,<span class="at">row.names=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<thead>
-<tr class="header">
-<th style="text-align: right;">F</th>
-<th style="text-align: right;">p</th>
-<th style="text-align: right;">expected_heterozygosity</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: right;">0.000</td>
-<td style="text-align: right;">0.5</td>
-<td style="text-align: right;">0.5000</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">0.125</td>
-<td style="text-align: right;">0.5</td>
-<td style="text-align: right;">0.4375</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">0.250</td>
-<td style="text-align: right;">0.5</td>
-<td style="text-align: right;">0.3750</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<p>These are illustrative probabilities at a fixed locus-frequency model, not measured heterozygosity in the preceding mating plans. Allele-frequency differences among parents, population structure, finite marker samples and linked inheritance affect actual observations. Compare this distinction with the marker summaries in Practical 8.</p>
-<p>Inbreeding depression also requires a model beyond additive values alone. With dominance or other nonadditive effects, increased autozygosity can change expected phenotype. The additive-only simulation in Practical 8 does not quantify such depression, so we cannot assign a phenotype cost from pedigree <span class="math inline">\(F\)</span> alone.</p>
 </section>
 <section id="exercises" class="level2">
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ol type="1">
-<li>Keep the four contributions equal but use only two within-family matings and six between-family matings. Find a plan and calculate mean offspring <span class="math inline">\(F\)</span>.</li>
-<li>Mate W1 and W2 from the within-family plan. Calculate their relationship and their offspring’s <span class="math inline">\(F\)</span>.</li>
-<li>Explain why a genomic relationship matrix standardized using current cohort frequencies cannot automatically replace this pedigree matrix in <span class="math inline">\(F=A_{sd}/2\)</span>.</li>
+<li>Add 2 to all validation predictions. Verify correlation and ranking stay unchanged, while error and calibration change.</li>
+<li>Multiply predictions by 2. Verify correlation and ranking stay unchanged and the calibration slope is halved.</li>
+<li>Describe a future-generation validation design when relatives may occur in training. What information must be dated?</li>
 </ol>
 <div class="callout callout-style-default callout-note callout-titled" title="Suggested solutions">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
@@ -4571,31 +4562,69 @@ Suggested solutions
 <div class="cell">
 <details class="code-fold">
 <summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One within-family child per family, three between-family children per pair.</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>plan2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">animal=</span><span class="fu">paste0</span>(<span class="st">&quot;C&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>),</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">sire=</span><span class="fu">c</span>(<span class="st">&quot;M1&quot;</span>,<span class="st">&quot;M2&quot;</span>,<span class="fu">rep</span>(<span class="st">&quot;M1&quot;</span>,<span class="dv">3</span>),<span class="fu">rep</span>(<span class="st">&quot;M2&quot;</span>,<span class="dv">3</span>)),</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">dam=</span><span class="fu">c</span>(<span class="st">&quot;F1&quot;</span>,<span class="st">&quot;F2&quot;</span>,<span class="fu">rep</span>(<span class="st">&quot;F2&quot;</span>,<span class="dv">3</span>),<span class="fu">rep</span>(<span class="st">&quot;F1&quot;</span>,<span class="dv">3</span>)))</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>counts2 <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="fu">factor</span>(<span class="fu">c</span>(plan2<span class="sc">$</span>sire,plan2<span class="sc">$</span>dam),<span class="at">levels=</span>parent_ids))</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>check2 <span class="ot">&lt;-</span> <span class="fu">assess_plan</span>(plan2,<span class="st">&quot;Exercise&quot;</span>)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(counts2<span class="sc">==</span><span class="dv">4</span>),check2<span class="sc">$</span>mean_F<span class="sc">==</span>.<span class="dv">0625</span>,check2<span class="sc">$</span>predicted_mean<span class="sc">==</span><span class="dv">9</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>A_within <span class="ot">&lt;-</span> extended<span class="sc">$</span>Within<span class="sc">$</span>A</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>F_next <span class="ot">&lt;-</span> A_within[<span class="st">&quot;W1&quot;</span>,<span class="st">&quot;W2&quot;</span>]<span class="sc">/</span><span class="dv">2</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(A_within[<span class="st">&quot;W1&quot;</span>,<span class="st">&quot;W2&quot;</span>]<span class="sc">==</span>.<span class="dv">75</span>,F_next<span class="sc">==</span>.<span class="dv">375</span>)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>F_next</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> observed[<span class="sc">!</span>splits<span class="sc">$</span>Represented,]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>prediction <span class="ot">&lt;-</span> fits<span class="sc">$</span>Represented<span class="sc">$</span>prediction[test<span class="sc">$</span>animal]</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>m0 <span class="ot">&lt;-</span> <span class="fu">metrics</span>(test<span class="sc">$</span>phenotype,prediction)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>mshift <span class="ot">&lt;-</span> <span class="fu">metrics</span>(test<span class="sc">$</span>phenotype,prediction<span class="sc">+</span><span class="dv">2</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>mscale <span class="ot">&lt;-</span> <span class="fu">metrics</span>(test<span class="sc">$</span>phenotype,<span class="dv">2</span><span class="sc">*</span>prediction)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">abs</span>(mshift[<span class="st">&quot;correlation&quot;</span>]<span class="sc">-</span>m0[<span class="st">&quot;correlation&quot;</span>])<span class="sc">&lt;</span><span class="fl">1e-12</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(mscale[<span class="st">&quot;correlation&quot;</span>]<span class="sc">-</span>m0[<span class="st">&quot;correlation&quot;</span>])<span class="sc">&lt;</span><span class="fl">1e-12</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(mscale[<span class="st">&quot;slope&quot;</span>]<span class="sc">-</span>m0[<span class="st">&quot;slope&quot;</span>]<span class="sc">/</span><span class="dv">2</span>)<span class="sc">&lt;</span><span class="fl">1e-12</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(mshift[<span class="st">&quot;mean_error&quot;</span>]<span class="sc">-</span>m0[<span class="st">&quot;mean_error&quot;</span>]<span class="sc">-</span><span class="dv">2</span>)<span class="sc">&lt;</span><span class="fl">1e-12</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">identical</span>(<span class="fu">order</span>(<span class="sc">-</span>prediction),<span class="fu">order</span>(<span class="sc">-</span>(prediction<span class="sc">+</span><span class="dv">2</span>))),</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">identical</span>(<span class="fu">order</span>(<span class="sc">-</span>prediction),<span class="fu">order</span>(<span class="sc">-</span><span class="dv">2</span><span class="sc">*</span>prediction)))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">rbind</span>(<span class="at">Original=</span>m0,<span class="at">Shifted=</span>mshift,<span class="at">Scaled=</span>mscale),<span class="at">digits=</span><span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.375</code></pre>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">correlation</th>
+<th style="text-align: right;">RMSE</th>
+<th style="text-align: right;">mean_error</th>
+<th style="text-align: right;">intercept</th>
+<th style="text-align: right;">slope</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Original</td>
+<td style="text-align: right;">0.954</td>
+<td style="text-align: right;">0.573</td>
+<td style="text-align: right;">-0.041</td>
+<td style="text-align: right;">0.072</td>
+<td style="text-align: right;">1.169</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Shifted</td>
+<td style="text-align: right;">0.954</td>
+<td style="text-align: right;">2.040</td>
+<td style="text-align: right;">1.959</td>
+<td style="text-align: right;">-2.265</td>
+<td style="text-align: right;">1.169</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Scaled</td>
+<td style="text-align: right;">0.954</td>
+<td style="text-align: right;">1.301</td>
+<td style="text-align: right;">-0.225</td>
+<td style="text-align: right;">0.072</td>
+<td style="text-align: right;">0.584</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
-<p>W1 and W2 are full siblings from related parents; their additive relationship is 0.75, so their child’s pedigree inbreeding is 0.375. The familiar full-sibling relationship of 0.5 assumes unrelated, noninbred parents. A genomic kernel has its own allele-frequency reference, centering and normalization; its entries need an established kinship interpretation on a declared base before applying an identity-by-descent formula. Negative centered genomic entries are not negative IBD probabilities.</p>
+<p>Freeze training records at the intended selection date and evaluate a later cohort. Preserve only phenotypes, genotypes, pedigree links and external information available by that date. Tune models within earlier training data. Related training animals may be appropriate if deployment genuinely includes them; report their connection rather than treating a chronological split as unrelated validation. Later progeny records may help assess evaluation performance, but the prediction being assessed must retain its original information date.</p>
 </div>
 </div>
 </div>
 </section>
 <section id="package-connection-and-next-topic" class="level2">
 <h2 class="anchored" data-anchor-id="package-connection-and-next-topic">Package connection and next topic</h2>
-<p><code>gsel</code> owns mating policies and contribution decisions. <code>gsim</code> can validate supplied parentage and simulate transmission from an explicit plan using its <a href="https://github.com/psoerensen/gsim/blob/main/docs/design/breeding_building_blocks.md">existing breeding interfaces</a>. Random mating in <code>gsim_mate()</code> does not avoid relatives automatically. The dense relationship calculation here is a small teaching calculation, not a new <code>gsim</code> relationship estimator or a scalable allocation solver.</p>
-<p>Continue with <a href="../tutorials/validating_selection_predictions.html">Practical 10: Validating predictions and selection decisions</a>, with particular attention to related animals, information available at selection and the distinction between phenotype prediction and breeding-value accuracy.</p>
+<p>Estimation tools own fitted genetic evaluations. <code>gsim</code> can provide observable records and separate known genetic truth for simulation experiments. <code>gsel</code> consumes predictions for programme decisions; <code>gpop</code> supplies population summaries. This lesson adds no package prediction or validation API.</p>
+<p>Next bring these pieces together in a breeding-programme comparison: declare the objective, information schedule, selection and mating rules, then evaluate gain, diversity and resources on a fixed base. A comparison needs replicated outcomes before drawing conclusions about expected policy performance.</p>
 
 
 </section>
