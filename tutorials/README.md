@@ -9,6 +9,8 @@
 
 - [Breeding objectives and selection indices](breeding_objectives_indices.qmd): Practical 6, using base R and hypothetical covariance inputs.
 
+- [Selection policies and mating plans](selection_mating_plans.qmd): Practical 7, requiring gsim for selection and parentage mechanics.
+
 Practicals 3–5 require qgg and the shared script in scripts/mouse_practical_helpers.R.
 
 Render an individual page from the repository root, for example:

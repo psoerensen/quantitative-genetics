@@ -39,6 +39,8 @@ After completing the course, students should be able to:
 
 - [Practical 6: Breeding objectives and selection indices](tutorials/breeding_objectives_indices.qmd) — economic weights, covariance inputs and expected response.
 
+- [Practical 7: Selection policies and mating plans](tutorials/selection_mating_plans.qmd) — eligibility, quotas, parent contributions and random versus balanced mating.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).

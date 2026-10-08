@@ -222,4 +222,4 @@ A positive common scaling changes objective/index units but not ranking or corre
 
 `gsel` owns objectives, selection policies and programme design. Its current [objective and index examples](https://github.com/psoerensen/gsel/tree/main/inst/examples) are base-R reference calculations, not exported scientific APIs. The objective and index examples here use the same supplied values. Fitting genetic evaluations remains with estimation tools; `gsim` owns biological generation.
 
-Next specify eligibility, quotas, parent contributions and mating, then evaluate gain, diversity, time and cost against a fixed reference. An index score alone does not define a breeding programme.
+Continue with [Practical 7: Selection policies and mating plans](selection_mating_plans.qmd) to specify eligibility, quotas, parent contributions and mating, then evaluate gain, diversity, time and cost against a fixed reference. An index score alone does not define a breeding programme.

@@ -1,0 +1,236 @@
+---
+title: "Selection policies and mating plans"
+subtitle: "Quantitative Genetics Practical 7: From scores to parent contributions"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Apply eligibility rules and selection quotas; interpret score ties; distinguish selected parents from their reproductive contributions; construct random and balanced mating plans; and calculate expected offspring merit under an additive model.
+
+Continue from [Practical 6](breeding_objectives_indices.qmd) and the slides on [selection on complex traits](../slides/introduction_quantitative_genetics.qmd#selection-on-complex-traits). This practical uses hypothetical candidates and supplied scores, not mouse measurements or a fitted evaluation. It requires `gsim` with `gsim_select()`, `gsim_mate()` and `gsim_pedigree_from_table()`. Install the package before starting if needed:
+
+```{r}
+#| eval: false
+install.packages("remotes") # Once, if needed.
+remotes::install_github("psoerensen/gsim")
+```
+
+```{r}
+#| label: setup
+library(gsim)
+stopifnot(all(c("gsim_select","gsim_mate","gsim_pedigree_from_table") %in%
+                getNamespaceExports("gsim")))
+```
+
+## 1. Separate merit from eligibility
+
+A score answers how candidates rank under an objective and information model. Eligibility answers which candidates may be used now. Here scores are supplied predicted aggregate breeding values in currency units on one fixed base. Age and availability are hypothetical programme requirements. Missing scores are excluded explicitly rather than replaced by zero.
+
+```{r}
+#| label: candidates
+candidates <- data.frame(
+  animal=c("M1","M2","M3","M4","F1","F2","F3","F4"),
+  sex=rep(c("M","F"),each=4),
+  family=rep(c("A","A","B","B"),2),
+  score=c(12,11,8,20,10,10,7,NA),
+  age_months=c(14,14,15,9,14,15,14,14),
+  available=c(TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE))
+candidates$eligible <- with(candidates,
+  age_months>=12 & available & is.finite(score))
+scores <- setNames(candidates$score,candidates$animal)
+knitr::kable(candidates,row.names=FALSE)
+```
+
+Family labels identify supplied groups; they do not reconstruct pedigree relationships. In particular, different families need not be unrelated. We will use them to compare selection rules, not estimate inbreeding.
+
+**Question 1.** Why is M4 excluded despite having the highest score?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+M4 does not meet the declared minimum age. Eligibility is applied before ranking. F4 is unavailable and has no finite score. A different programme could choose different rules, but those rules should be explicit before examining selection outcomes.
+:::
+
+## 2. Select within parental roles
+
+Select two eligible candidates for each role. `strata` and `eligible` follow candidate order; scores are matched by animal identity. `gsim_select()` does not fit predictions. Equal scores use UTF-8 animal identity as the tie rule, so F1 precedes F2.
+
+```{r}
+#| label: role-selection
+by_role <- gsim_select(candidates$animal,n=c(M=2,F=2),scores=scores,
+  method="score",strata=candidates$sex,eligible=candidates$eligible)
+selected_role <- by_role$animal[by_role$selected]
+stopifnot(setequal(selected_role,c("M1","M2","F1","F2")))
+knitr::kable(by_role,row.names=FALSE)
+# Identity matching and the tie rule preserve the selected set after reordering.
+j <- rev(seq_len(nrow(candidates)))
+reordered <- gsim_select(candidates$animal[j],n=c(M=2,F=2),scores=scores,
+  method="score",strata=candidates$sex[j],eligible=candidates$eligible[j])
+stopifnot(setequal(selected_role,reordered$animal[reordered$selected]))
+```
+
+The reported inclusion probabilities are 0 or 1 conditional on these scores and rules. They are not probabilities of being selected over repeated genetic evaluations or evidence of representative population sampling.
+
+### Require representation from both families
+
+Instead choose exactly one candidate from each role/family group. This is an exact quota policy. It is not a general optimizer for overlapping family limits, cost constraints or genetic relationships.
+
+```{r}
+#| label: family-selection
+stratum <- paste(candidates$sex,candidates$family,sep="_")
+quota <- c(M_A=1,M_B=1,F_A=1,F_B=1)
+by_family <- gsim_select(candidates$animal,n=quota,scores=scores,
+  method="score",strata=stratum,eligible=candidates$eligible)
+selected_family <- by_family$animal[by_family$selected]
+stopifnot(setequal(selected_family,c("M1","M3","F1","F3")))
+knitr::kable(by_family,row.names=FALSE)
+```
+
+**Question 2.** What is gained and lost by requiring family representation?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Both families contribute selected candidates in each role. The mean selected score decreases because M3 and F3 replace higher-scoring candidates. This preserves representation of the declared groups; a claim about improved genetic diversity or lower offspring inbreeding would require relationships and the actual mating/contribution plan.
+:::
+
+```{r}
+#| label: policy-comparison
+role_mean <- function(ids,role) {
+  animals <- candidates$animal[candidates$sex==role & candidates$animal %in% ids]
+  mean(scores[animals])
+}
+comparison <- data.frame(policy=c("Role quotas","Role and family quotas"),
+  sire_mean=c(role_mean(selected_role,"M"),role_mean(selected_family,"M")),
+  dam_mean=c(role_mean(selected_role,"F"),role_mean(selected_family,"F")))
+comparison$expected_offspring_score <- with(comparison,(sire_mean+dam_mean)/2)
+stopifnot(identical(comparison$expected_offspring_score,c(10.75,9.25)))
+knitr::kable(comparison,row.names=FALSE)
+```
+
+These values assume uniform contributions within each role. They are expected additive offspring merit based on supplied predictions, not observed gain or validation of those predictions.
+
+## 3. Draw random parentage
+
+Construct a small pedigree container and use the family-quota parents. Missing parentage is represented by `NA`. Treating these candidates as founders supplies no earlier ancestry: it does not establish that real candidates are unrelated, especially within the supplied family groups.
+
+`gsim_mate()` draws each child's sire and dam independently and uniformly with replacement. A selected parent can receive no offspring. It does not enforce balanced contributions or avoid related pairs.
+
+```{r}
+#| label: random-mating
+parent_table <- data.frame(animal=candidates$animal,sire=NA_character_,
+  dam=NA_character_,sex=candidates$sex,generation=1L)
+pedigree <- gsim_pedigree_from_table(parent_table)
+sires <- selected_family[selected_family %in% candidates$animal[candidates$sex=="M"]]
+dams <- selected_family[selected_family %in% candidates$animal[candidates$sex=="F"]]
+children <- sprintf("O%02d",1:12)
+mating <- gsim_mate(pedigree,sires=sires,dams=dams,offspring=children,seed=20261008)
+plan <- mating$offspring
+stopifnot(nrow(plan)==12,all(plan$sire %in% sires),all(plan$dam %in% dams))
+repeat_plan <- gsim_mate(pedigree,sires=sires,dams=dams,
+                        offspring=children,seed=20261008)
+stopifnot(identical(plan,repeat_plan$offspring))
+knitr::kable(plan[,c("animal","sire","dam")],row.names=FALSE)
+```
+
+The seed is passed to `gsim`, whose identity-keyed random streams do not use R's global RNG. Repeating these inputs gives the same parentage. This step creates parentage records; inheritance and offspring phenotypes will be simulated in the next practical.
+
+## 4. Measure contributions and expected offspring merit
+
+For $N$ offspring, let $n_j$ be the number of parental slots assigned to parent $j$. Its fraction of transmitted genes is $c_j=n_j/(2N)$. Sire contributions sum to one half, and dam contributions sum to one half. Under additive inheritance and mean-zero Mendelian sampling,
+
+$$E(\overline H_{\mathrm{offspring}}\mid\mathrm{plan})
+=\sum_j c_j\widehat H_j.$$
+
+This is a prediction conditional on the supplied parental evaluations and model. If true parental merit were known, the same expression would give the conditional genetic expectation. It does not describe realized Mendelian sampling.
+
+```{r}
+#| label: contributions
+parent_ids <- c(sires,dams)
+counts <- table(factor(c(plan$sire,plan$dam),levels=parent_ids))
+contribution <- as.numeric(counts)/(2*nrow(plan))
+names(contribution) <- parent_ids
+expected_by_child <- (scores[plan$sire]+scores[plan$dam])/2
+expected_by_contribution <- sum(contribution*scores[parent_ids])
+stopifnot(abs(sum(contribution)-1)<1e-12,
+  abs(sum(contribution[sires])-.5)<1e-12,
+  abs(mean(expected_by_child)-expected_by_contribution)<1e-12)
+knitr::kable(data.frame(parent=parent_ids,offspring_slots=as.numeric(counts),
+  gene_contribution=contribution),digits=3,row.names=FALSE)
+c(expected_under_uniform_draws=9.25,
+  expected_given_drawn_plan=expected_by_contribution)
+```
+
+The unconditional expected mean is 9.25 for this selected pool. A finite drawn plan can have a different conditional expectation because parent counts vary. The number of selected parents therefore does not specify their realized contributions.
+
+```{r}
+#| label: fig-contributions
+#| fig-cap: "Random mating can produce unequal parental contributions. The dashed line shows the contribution under equal use of all four selected parents."
+#| fig-width: 8
+#| fig-height: 4
+barplot(contribution,col=c(rep("#247BA0",length(sires)),
+                          rep("#86B7A3",length(dams))),
+        ylab="Fraction of transmitted genes",ylim=c(0,max(.3,contribution)))
+abline(h=.25,lty=2)
+```
+
+## 5. Supply a balanced mating plan
+
+For comparison, use each of the four sire/dam combinations three times. This plan is an explicit teaching allocation, not an optimum mating method. We supply it directly to the pedigree validator rather than expecting random mating to enforce it.
+
+```{r}
+#| label: balanced-plan
+pairs <- expand.grid(sire=sires,dam=dams,stringsAsFactors=FALSE)
+balanced <- pairs[rep(seq_len(nrow(pairs)),each=3),]
+balanced$animal <- sprintf("B%02d",seq_len(nrow(balanced)))
+balanced$sex <- rep(c("M","F"),length.out=nrow(balanced))
+balanced$generation <- 2L
+balanced <- balanced[,names(parent_table)]
+balanced_pedigree <- gsim_pedigree_from_table(rbind(parent_table,balanced))
+balanced_counts <- table(factor(c(balanced$sire,balanced$dam),levels=parent_ids))
+balanced_contribution <- as.numeric(balanced_counts)/(2*nrow(balanced))
+stopifnot(all(balanced_counts==6),all(balanced_contribution==.25),
+  abs(mean((scores[balanced$sire]+scores[balanced$dam])/2)-9.25)<1e-12)
+knitr::kable(balanced,row.names=FALSE)
+```
+
+Balanced use fixes these parent counts. It does not guarantee low inbreeding: this plan includes within-family pairs, and ancestry is incomplete. To assess a mating plan, offspring inbreeding requires parental kinship on a declared pedigree or genomic reference. Optimizing contributions or avoiding related matings is a separate policy problem.
+
+**Question 3.** Could different pairings with the same contributions change expected mean additive merit?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Under the stated additive model, the expected mean depends on contributions, so rearranging pairs while keeping counts fixed preserves that mean. Pairing can change offspring inbreeding, segregation variance and nonadditive outcomes. Those consequences require additional genetic information; parental scores alone cannot quantify them.
+:::
+
+## Exercises
+
+1. Select only one candidate per role. Verify which tied female is chosen.
+2. Make M3 ineligible under the exact family quota policy. Explain why the policy becomes infeasible before calling the selector.
+3. In an explicit 12-child plan, assign M1 nine sire slots and M3 three, while each selected dam receives six. Calculate contributions and expected mean merit.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+one_each <- gsim_select(candidates$animal,n=c(M=1,F=1),scores=scores,
+  method="score",strata=candidates$sex,eligible=candidates$eligible)
+stopifnot(setequal(one_each$animal[one_each$selected],c("M1","F1")))
+mask <- candidates$eligible & candidates$animal!="M3"
+capacity <- table(factor(stratum[mask],levels=names(quota)))
+stopifnot(capacity["M_B"]==0)
+custom_c <- c(M1=9,M3=3,F1=6,F3=6)/24
+custom_mean <- sum(custom_c*scores[names(custom_c)])
+stopifnot(abs(custom_mean-9.75)<1e-12)
+custom_mean
+```
+The M_B quota requests one parent but has zero eligible candidates. The policy must be revised explicitly. In the unequal-use example the contributions are 0.375, 0.125, 0.25 and 0.25; predicted offspring merit rises to 9.75 because the higher-scoring sire receives more slots. This is not an assessment of the diversity cost.
+:::
+
+## Package connection and next topic
+
+`gsel` owns objectives and programme policies; its current [scope](https://github.com/psoerensen/gsel/blob/main/docs/design/scope.md) does not export a scientific policy optimizer. This practical supplies rules explicitly and uses existing [`gsim` selection and mating interfaces](https://github.com/psoerensen/gsim/blob/main/R/breeding_blocks.R) for mechanics. No new package API is needed.
+
+Next simulate inheritance and records for an offspring cohort. Keep the genetic architecture and reporting base fixed, separate predictions from simulated truth, and compare realized gain and diversity with these parental expectations.
