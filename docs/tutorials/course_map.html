@@ -198,6 +198,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#foundations-of-genetic-variation" id="toc-foundations-of-genetic-variation" class="nav-link" data-scroll-target="#foundations-of-genetic-variation">Foundations of genetic variation</a></li>
   <li><a href="#genetic-evaluation-and-validation" id="toc-genetic-evaluation-and-validation" class="nav-link" data-scroll-target="#genetic-evaluation-and-validation">Genetic evaluation and validation</a></li>
   <li><a href="#population-change-and-evolutionary-selection" id="toc-population-change-and-evolutionary-selection" class="nav-link" data-scroll-target="#population-change-and-evolutionary-selection">Population change and evolutionary selection</a></li>
+  <li><a href="#linked-selection-and-genealogical-history" id="toc-linked-selection-and-genealogical-history" class="nav-link" data-scroll-target="#linked-selection-and-genealogical-history">Linked selection and genealogical history</a></li>
   <li><a href="#disease-alleles-and-phenotype-probability" id="toc-disease-alleles-and-phenotype-probability" class="nav-link" data-scroll-target="#disease-alleles-and-phenotype-probability">Disease alleles and phenotype probability</a></li>
   <li><a href="#sequence-divergence-and-dating" id="toc-sequence-divergence-and-dating" class="nav-link" data-scroll-target="#sequence-divergence-and-dating">Sequence divergence and dating</a></li>
   <li><a href="#dna-profile-probability" id="toc-dna-profile-probability" class="nav-link" data-scroll-target="#dna-profile-probability">DNA-profile probability</a></li>
@@ -208,7 +209,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#package-connections" id="toc-package-connections" class="nav-link" data-scroll-target="#package-connections">Package connections</a></li>
   <li><a href="#using-the-course-materials" id="toc-using-the-course-materials" class="nav-link" data-scroll-target="#using-the-course-materials">Using the course materials</a>
   <ul class="collapse">
-  <li><a href="#further-topics-and-interactive-resources" id="toc-further-topics-and-interactive-resources" class="nav-link" data-scroll-target="#further-topics-and-interactive-resources">Further topics and interactive resources</a></li>
+  <li><a href="#evolutionary-extensions-and-interactive-resources" id="toc-evolutionary-extensions-and-interactive-resources" class="nav-link" data-scroll-target="#evolutionary-extensions-and-interactive-resources">Evolutionary extensions and interactive resources</a></li>
   </ul></li>
   <li><a href="#instructor-preparation-and-assessment" id="toc-instructor-preparation-and-assessment" class="nav-link" data-scroll-target="#instructor-preparation-and-assessment">Instructor preparation and assessment</a></li>
   </ul>
@@ -256,6 +257,8 @@ ul.task-list li input[type="checkbox"] {
   F --&gt; H["Programme comparison: QG 11"]
   G --&gt; H
   B --&gt; H
+  B --&gt; I["Linked selection: PG 14"]
+  B --&gt; J["Genealogies: PG 15"]
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -266,7 +269,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="population-genetics-sequence" class="level2">
 <h2 class="anchored" data-anchor-id="population-genetics-sequence">Population-genetics sequence</h2>
-<p>These thirteen practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.</p>
+<p>These fifteen practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -321,12 +324,38 @@ ul.task-list li input[type="checkbox"] {
 <td>How do equilibrium and stationary variation depend on the model?</td>
 <td>PG 5–7; probability and simple recursions</td>
 </tr>
+<tr class="even">
+<td><a href="https://psoerensen.github.io/population-genetics/tutorials/conservation_genetics.html">PG 10: Conservation genetics and management choices</a></td>
+<td>How do contributions, pairings and a budget affect conservation choices?</td>
+<td>PG 3–4 and PG 6; QG 9 is helpful</td>
+</tr>
+<tr class="odd">
+<td><a href="https://psoerensen.github.io/population-genetics/tutorials/dna_match_probabilities.html">PG 11: DNA profiles and match probabilities</a></td>
+<td>Which assumptions connect genotype frequencies to match evidence?</td>
+<td>PG 2–3 and PG 5; conditional probability</td>
+</tr>
+<tr class="even">
+<td><a href="https://psoerensen.github.io/population-genetics/tutorials/molecular_clock.html">PG 12: Sequence divergence and the molecular clock</a></td>
+<td>How do substitution and calibration assumptions turn differences into time?</td>
+<td>PG 1, PG 4–5; probability and logarithms</td>
+</tr>
+<tr class="odd">
+<td><a href="https://psoerensen.github.io/population-genetics/tutorials/disease_alleles_penetrance.html">PG 13: Disease alleles, penetrance and population risk</a></td>
+<td>How do genotype frequencies and penetrance determine phenotype probabilities?</td>
+<td>PG 2–3; conditional probability</td>
+</tr>
+<tr class="even">
+<td><a href="https://psoerensen.github.io/population-genetics/tutorials/selective_sweeps.html">PG 14: Selective sweeps and genetic hitchhiking</a></td>
+<td>How do selection, recombination and initial backgrounds affect linked variation?</td>
+<td>PG 4–5 and PG 7</td>
+</tr>
+<tr class="odd">
+<td><a href="https://psoerensen.github.io/population-genetics/tutorials/coalescent_history.html">PG 15: Coalescent history and sampled variation</a></td>
+<td>How do ancestry and mutations connect sampled diversity to demographic assumptions?</td>
+<td>PG 4, PG 6 and PG 12; exponential waiting times</td>
+</tr>
 </tbody>
 </table>
-<div class="line-block"><a href="https://psoerensen.github.io/population-genetics/tutorials/conservation_genetics.html">PG 10: Conservation genetics and management choices</a> | How do contributions, pairings and a budget affect conservation choices? | PG 3–4 and PG 6; QG 9 is helpful |</div>
-<div class="line-block"><a href="https://psoerensen.github.io/population-genetics/tutorials/dna_match_probabilities.html">PG 11: DNA profiles and match probabilities</a> | Which assumptions connect genotype frequencies to match evidence? | PG 2–3 and PG 5; conditional probability |</div>
-<div class="line-block"><a href="https://psoerensen.github.io/population-genetics/tutorials/molecular_clock.html">PG 12: Sequence divergence and the molecular clock</a> | How do substitution and calibration assumptions turn differences into time? | PG 1, PG 4–5; probability and logarithms |</div>
-<div class="line-block"><a href="https://psoerensen.github.io/population-genetics/tutorials/disease_alleles_penetrance.html">PG 13: Disease alleles, penetrance and population risk</a> | How do genotype frequencies and penetrance determine phenotype probabilities? | PG 2–3; conditional probability |</div>
 <p>Keep <a href="https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html">population-genetics slides</a> alongside the practicals. In particular, HWE is a model expectation; identity by descent is defined on an ancestral base; and dosage alone does not identify phase.</p>
 </section>
 <section id="quantitative-genetics-sequence" class="level2">
@@ -454,6 +483,14 @@ ul.task-list li input[type="checkbox"] {
 <td>PG 13; penetrance, inbreeding, known-parent crosses and reverse conditioning</td>
 </tr>
 <tr class="even">
+<td>Selective sweeps and linked variation</td>
+<td>PG 14; explicit haplotype recursion and interpretation limits</td>
+</tr>
+<tr class="odd">
+<td>Coalescent genealogy and population-history assumptions</td>
+<td>PG 15; neutral tree, branch mutations and a supplied two-epoch pair model</td>
+</tr>
+<tr class="even">
 <td>Quantitative variation, covariance and single-locus gene action</td>
 <td>QG 1–2; worked mouse analysis and hypothetical checks</td>
 </tr>
@@ -481,7 +518,7 @@ ul.task-list li input[type="checkbox"] {
 </table>
 <section id="further-extensions" class="level3">
 <h3 class="anchored" data-anchor-id="further-extensions">Further extensions</h3>
-<p>PG 10 now provides a conservation-genetics application. PG 11 adds DNA-profile probabilities and evidence interpretation. PG 12 adds sequence divergence and a simple calibrated clock. PG 13 adds the medicine theme using hypothetical genotype-specific penetrance and conditional probabilities. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.</p>
+<p>PG 10 now provides a conservation-genetics application. PG 11 adds DNA-profile probabilities and evidence interpretation. PG 12 adds sequence divergence and a simple calibrated clock. PG 13 adds the medicine theme using hypothetical genotype-specific penetrance and conditional probabilities. PG 9 provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions. PG 14 adds linked selection and sweep interpretation; PG 15 adds a worked neutral coalescent model.</p>
 <p>The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.</p>
 <p>PG 8 now supplies formal HWE inference. Teach it after PG 2–3 when the aim includes hypothesis testing, keeping observed departures separate from explanations of their cause.</p>
 <p>QG 13 now supplies a worked association scan. Its synthetic OLS model does not qualify a real GWAS in related animals; transfer to the mouse population requires an appropriate relatedness model.</p>
@@ -503,6 +540,11 @@ ul.task-list li input[type="checkbox"] {
 <h3 class="anchored" data-anchor-id="population-change-and-evolutionary-selection">Population change and evolutionary selection</h3>
 <p>Work through <strong>PG 1 → PG 2 → PG 3 → PG 4 → PG 5 → PG 6 → PG 7 → PG 9</strong>. Use <strong>QG 2</strong> as a bridge between gene action for a trait and genotype fitness.</p>
 <p>Checkpoint: separate deterministic expectations from finite-population realizations. Fitness dominance in PG 7 is a different model quantity from phenotypic dominance in QG 2; economic weights in QG 6 describe another decision layer.</p>
+</section>
+<section id="linked-selection-and-genealogical-history" class="level3">
+<h3 class="anchored" data-anchor-id="linked-selection-and-genealogical-history">Linked selection and genealogical history</h3>
+<p>Review <strong>PG 4–7 → PG 14</strong>, then <strong>PG 6 → PG 12 → PG 15</strong> for backwards ancestry. The coalescent example is neutral; it does not reuse the selected-locus genealogy implicitly.</p>
+<p>Checkpoint: distinguish allele-frequency dynamics from a sampled genealogy, explain how recombination affects linked selection, and state why a diversity pattern alone does not identify either a sweep or a demographic event.</p>
 </section>
 <section id="disease-alleles-and-phenotype-probability" class="level3">
 <h3 class="anchored" data-anchor-id="disease-alleles-and-phenotype-probability">Disease alleles and phenotype probability</h3>
@@ -545,7 +587,7 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td>PG 1–13</td>
+<td>PG 1–15</td>
 <td>Base R; hypothetical data; no required downloads</td>
 </tr>
 <tr class="even">
@@ -628,9 +670,9 @@ ul.task-list li input[type="checkbox"] {
 <p>During lectures, use the slides to introduce the biological question and the practical to connect it to a model and calculation. For independent study, read the assumptions, attempt the interpretation questions and exercises, then open the suggested solutions.</p>
 <p>Treat R as a virtual laboratory: first reproduce the supplied example, then change one assumption or parameter and predict its consequences before rerunning. Keep the original population, units and reporting base explicit. For projects, distinguish exploratory teaching examples from an analysis that has been checked for the project’s data and sampling design.</p>
 <p>For examination preparation, use the learning objectives as prompts: define the quantities, derive or explain the equation, interpret a worked result and name the assumptions needed for that interpretation. The course map supplies routes through the material; assessment requirements are set by the course instructor.</p>
-<section id="further-topics-and-interactive-resources" class="level3">
-<h3 class="anchored" data-anchor-id="further-topics-and-interactive-resources">Further topics and interactive resources</h3>
-<p>Selective-sweep signatures and a worked ancestral coalescent model remain further extensions. PG 12 distinguishes sequence common ancestry from species separation but does not fit a coalescent model. The current mutation, drift and selection practicals do not supply a genomic sweep-detection workflow.</p>
+<section id="evolutionary-extensions-and-interactive-resources" class="level3">
+<h3 class="anchored" data-anchor-id="evolutionary-extensions-and-interactive-resources">Evolutionary extensions and interactive resources</h3>
+<p>PG 14 explains hitchhiking and the interpretation of sweep signatures. PG 15 simulates a neutral nonrecombining genealogy and connects branch mutations to sampled variation. PG 12 supplies the complementary substitution-distance clock. These lessons do not qualify a genomic sweep detector or fit demographic history to biological data.</p>
 <p>QG 3 explains regression on relatives, and QG 4 explains prediction from one information source. Those sections provide model checks for interactive exploration: shared environment can alter relative resemblance, and reliability is squared model-based accuracy. Use <a href="https://peter-soerensen.shinyapps.io/estimation_heritability_regression">Heritability Estimation Using Different Types of Relatives</a> with QG 3 and <a href="https://peter-soerensen.shinyapps.io/estimation_breeding_value_single_source/">Breeding Value Estimation from a Single Information Source</a> with QG 4.</p>
 </section>
 </section>

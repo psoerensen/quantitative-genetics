@@ -24,13 +24,15 @@ flowchart TD
   F --> H["Programme comparison: QG 11"]
   G --> H
   B --> H
+  B --> I["Linked selection: PG 14"]
+  B --> J["Genealogies: PG 15"]
 ```
 
 Arrows show useful conceptual connections, not compulsory software dependencies. You can teach the short routes below without running every preceding analysis.
 
 ## Population-genetics sequence
 
-These thirteen practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.
+These fifteen practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.
 
 | Practical | Main question | Useful preparation |
 |---|---|---|
@@ -43,14 +45,12 @@ These thirteen practicals use base R and hypothetical inputs. They require no bi
 | [PG 7: Selection, fitness and dominance](https://psoerensen.github.io/population-genetics/tutorials/selection_fitness.html) | How do genotype fitness and sampling change allele trajectories? | PG 2 and PG 6 |
 | [PG 8: Testing HWE proportions](https://psoerensen.github.io/population-genetics/tutorials/testing_hwe.html) | What do approximate and exact tests establish? | PG 2–3; sampling and hypothesis testing |
 | [PG 9: Mutation, selection and drift at balance](https://psoerensen.github.io/population-genetics/tutorials/mutation_balance.html) | How do equilibrium and stationary variation depend on the model? | PG 5–7; probability and simple recursions |
-
 | [PG 10: Conservation genetics and management choices](https://psoerensen.github.io/population-genetics/tutorials/conservation_genetics.html) | How do contributions, pairings and a budget affect conservation choices? | PG 3–4 and PG 6; QG 9 is helpful |
-
 | [PG 11: DNA profiles and match probabilities](https://psoerensen.github.io/population-genetics/tutorials/dna_match_probabilities.html) | Which assumptions connect genotype frequencies to match evidence? | PG 2–3 and PG 5; conditional probability |
-
 | [PG 12: Sequence divergence and the molecular clock](https://psoerensen.github.io/population-genetics/tutorials/molecular_clock.html) | How do substitution and calibration assumptions turn differences into time? | PG 1, PG 4–5; probability and logarithms |
-
 | [PG 13: Disease alleles, penetrance and population risk](https://psoerensen.github.io/population-genetics/tutorials/disease_alleles_penetrance.html) | How do genotype frequencies and penetrance determine phenotype probabilities? | PG 2–3; conditional probability |
+| [PG 14: Selective sweeps and genetic hitchhiking](https://psoerensen.github.io/population-genetics/tutorials/selective_sweeps.html) | How do selection, recombination and initial backgrounds affect linked variation? | PG 4–5 and PG 7 |
+| [PG 15: Coalescent history and sampled variation](https://psoerensen.github.io/population-genetics/tutorials/coalescent_history.html) | How do ancestry and mutations connect sampled diversity to demographic assumptions? | PG 4, PG 6 and PG 12; exponential waiting times |
 
 Keep [population-genetics slides](https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html) alongside the practicals. In particular, HWE is a model expectation; identity by descent is defined on an ancestral base; and dosage alone does not identify phase.
 
@@ -89,6 +89,8 @@ The practicals cover the central flow, but some slide topics currently have expl
 | DNA forensics and probability interpretation | PG 11; multi-allelic genotype probabilities, population structure and source hypotheses |
 | Sequence divergence and molecular clocks | PG 12; comparable sites, JC distance, rate units and conditional uncertainty |
 | Population genetics in medicine | PG 13; penetrance, inbreeding, known-parent crosses and reverse conditioning |
+| Selective sweeps and linked variation | PG 14; explicit haplotype recursion and interpretation limits |
+| Coalescent genealogy and population-history assumptions | PG 15; neutral tree, branch mutations and a supplied two-epoch pair model |
 | Quantitative variation, covariance and single-locus gene action | QG 1–2; worked mouse analysis and hypothetical checks |
 | Genotype-by-environment interaction and broad-sense entry-mean heritability | QG 12; replicated genotypes, balanced ANOVA and observation-unit distinctions |
 | Narrow-sense heritability and fitted genetic evaluation | QG 3–5; an additive relationship model, BLUP and held-out phenotype prediction |
@@ -98,7 +100,7 @@ The practicals cover the central flow, but some slide topics currently have expl
 
 ### Further extensions
 
-PG 10 now provides a conservation-genetics application. PG 11 adds DNA-profile probabilities and evidence interpretation. PG 12 adds sequence divergence and a simple calibrated clock. PG 13 adds the medicine theme using hypothetical genotype-specific penetrance and conditional probabilities. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.
+PG 10 now provides a conservation-genetics application. PG 11 adds DNA-profile probabilities and evidence interpretation. PG 12 adds sequence divergence and a simple calibrated clock. PG 13 adds the medicine theme using hypothetical genotype-specific penetrance and conditional probabilities. PG 9 provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions. PG 14 adds linked selection and sweep interpretation; PG 15 adds a worked neutral coalescent model.
 
 The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.
 
@@ -125,6 +127,12 @@ Checkpoint: distinguish predicted breeding values, phenotype predictions, model-
 Work through **PG 1 → PG 2 → PG 3 → PG 4 → PG 5 → PG 6 → PG 7 → PG 9**. Use **QG 2** as a bridge between gene action for a trait and genotype fitness.
 
 Checkpoint: separate deterministic expectations from finite-population realizations. Fitness dominance in PG 7 is a different model quantity from phenotypic dominance in QG 2; economic weights in QG 6 describe another decision layer.
+
+### Linked selection and genealogical history
+
+Review **PG 4–7 → PG 14**, then **PG 6 → PG 12 → PG 15** for backwards ancestry. The coalescent example is neutral; it does not reuse the selected-locus genealogy implicitly.
+
+Checkpoint: distinguish allele-frequency dynamics from a sampled genealogy, explain how recombination affects linked selection, and state why a diversity pattern alone does not identify either a sweep or a demographic event.
 
 ### Disease alleles and phenotype probability
 
@@ -160,7 +168,7 @@ Checkpoint: define the objective, candidate eligibility, information schedule, p
 
 | Materials | Requirements and inputs |
 |---|---|
-| PG 1–13 | Base R; hypothetical data; no required downloads |
+| PG 1–15 | Base R; hypothetical data; no required downloads |
 | QG 1–2 | Base R calculations; pinned public mouse data downloads |
 | QG 3–5 | `qgg`; pinned public mouse data; the shared helper script |
 | QG 6 | Base R; supplied hypothetical objective and covariance inputs |
@@ -194,9 +202,9 @@ Treat R as a virtual laboratory: first reproduce the supplied example, then chan
 
 For examination preparation, use the learning objectives as prompts: define the quantities, derive or explain the equation, interpret a worked result and name the assumptions needed for that interpretation. The course map supplies routes through the material; assessment requirements are set by the course instructor.
 
-### Further topics and interactive resources
+### Evolutionary extensions and interactive resources
 
-Selective-sweep signatures and a worked ancestral coalescent model remain further extensions. PG 12 distinguishes sequence common ancestry from species separation but does not fit a coalescent model. The current mutation, drift and selection practicals do not supply a genomic sweep-detection workflow.
+PG 14 explains hitchhiking and the interpretation of sweep signatures. PG 15 simulates a neutral nonrecombining genealogy and connects branch mutations to sampled variation. PG 12 supplies the complementary substitution-distance clock. These lessons do not qualify a genomic sweep detector or fit demographic history to biological data.
 
 QG 3 explains regression on relatives, and QG 4 explains prediction from one information source. Those sections provide model checks for interactive exploration: shared environment can alter relative resemblance, and reliability is squared model-based accuracy. Use [Heritability Estimation Using Different Types of Relatives](https://peter-soerensen.shinyapps.io/estimation_heritability_regression) with QG 3 and [Breeding Value Estimation from a Single Information Source](https://peter-soerensen.shinyapps.io/estimation_breeding_value_single_source/) with QG 4.
 
