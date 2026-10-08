@@ -233,4 +233,4 @@ The M_B quota requests one parent but has zero eligible candidates. The policy m
 
 `gsel` owns objectives and programme policies; its current [scope](https://github.com/psoerensen/gsel/blob/main/docs/design/scope.md) does not export a scientific policy optimizer. This practical supplies rules explicitly and uses existing [`gsim` selection and mating interfaces](https://github.com/psoerensen/gsim/blob/main/R/breeding_blocks.R) for mechanics. No new package API is needed.
 
-Next simulate inheritance and records for an offspring cohort. Keep the genetic architecture and reporting base fixed, separate predictions from simulated truth, and compare realized gain and diversity with these parental expectations.
+Continue with [Practical 8: Simulating selection response](simulating_selection_response.qmd) to simulate inheritance and records for offspring cohorts. Keep the genetic architecture and reporting base fixed, separate predictions from simulated truth, and compare realized gain and diversity with these parental expectations.

@@ -1,0 +1,254 @@
+---
+title: "Simulating selection response"
+subtitle: "Quantitative Genetics Practical 8: Genetic gain and diversity across generations"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Simulate offspring from phased parents; retain one genetic architecture and reporting base; distinguish phenotypes from genetic truth; compare phenotype-based and random selection; and interpret gain, genetic variance and marker diversity across generations.
+
+Continue from [Practical 7](selection_mating_plans.qmd) and the slides on [selection on complex traits](../slides/introduction_quantitative_genetics.qmd#selection-on-complex-traits). This is a small, hypothetical simulation, not an analysis of the mouse dataset or a qualification of a breeding strategy. It uses base R and the existing `gsim` package, with no biological downloads or predictor fitting. See Practical 7 for installation.
+
+## 1. Declare the biological and programme assumptions
+
+We use 32 diploid founders, six linked biallelic markers on one chromosome, and one additive trait measured in arbitrary trait units. The genome has no dominance, mutation or migration in this example. Marker effects remain fixed. `gsim` models chromosome-wise meiosis with Poisson crossovers and no interference, using the supplied cumulative genetic map.
+
+Each generation has 16 candidates per parental role. Select four sires and four dams, then draw 32 offspring by uniform independent parent sampling with replacement. Every new cohort replaces the previous cohort as the candidate population; no parents are carried over. Offspring sex alternates by identity so that role counts remain fixed. This is a deliberate programme simplification.
+
+## 2. Create a synthetic phased founder panel
+
+Use R's RNG only to create this tiny synthetic input. Calls explicitly contain phase: `0|1` and `1|0` identify different parental copies. Here allele 1 is VCF ALT, G; `gsim` retains it as BIM A1 and dosage counts this allele. File outputs go to a new temporary folder on each run.
+
+```{r}
+#| label: founders
+library(gsim)
+needed <- c("gsim_import_vcf","gsim_simulate_pedigree","gsim_simulate_cohort",
+  "gsim_trait_state","gsim_genetic_values","gsim_records","gsim_select","gsim_mate")
+stopifnot(all(needed %in% getNamespaceExports("gsim")))
+work <- tempfile("selection-practical-")
+dir.create(work)
+ids <- sprintf("base%02d",1:32)
+markers <- paste0("m",1:6)
+set.seed(20261008)
+h1 <- matrix(rbinom(32*6,1,.5),32,6,dimnames=list(ids,markers))
+h2 <- matrix(rbinom(32*6,1,.5),32,6,dimnames=list(ids,markers))
+vcf <- file.path(work,"founders.vcf")
+header <- paste(c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER",
+                  "INFO","FORMAT",ids),collapse="\t")
+body <- vapply(seq_along(markers),function(j) {
+  paste(c("1",10*j,markers[j],"A","G",".",".",".","GT",
+          paste(h1[,j],h2[,j],sep="|")),collapse="\t")
+},character(1))
+writeLines(c("##fileformat=VCFv4.2",header,body),vcf)
+map <- data.frame(chromosome="1",variant_id=markers,
+                  genetic_position_cm=seq(0,100,length.out=6))
+reference <- gsim_import_vcf(vcf,map,file.path(work,"reference"))
+parent_table <- data.frame(animal=ids,sire=NA_character_,dam=NA_character_,
+                          sex=rep(c("M","F"),16),generation=1L)
+pedigree0 <- gsim_pedigree_from_table(parent_table)
+phase0 <- gsim_simulate_pedigree(reference,pedigree0,101,
+                               file.path(work,"base-phase"),"hap")
+bed0 <- gsim_simulate_pedigree(reference,pedigree0,101,
+                             file.path(work,"base-dosage"),"bed")
+```
+
+The two founder exports use the same stored founder alleles. They provide phased input for transmission and dosage input for reporting. They do not independently redraw founders.
+
+## 3. Freeze the architecture and reporting base
+
+For dosage $d_{ij}$ of allele G at marker $j$, define genetic value
+
+$$g_i=\sum_j(d_{ij}-c_j)\beta_j,$$
+
+where effects $\beta_j$ are in trait units per allele and centers $c_j$ remain fixed at one. With this additive architecture, these genetic values supply the simulation's additive merit. No cohort-specific variance normalization is applied.
+
+```{r}
+#| label: architecture
+effects <- matrix(c(.2,-.1,.15,0,.05,.1),6,1,
+                  dimnames=list(markers,"trait"))
+state <- gsim_trait_state(effects,center=1)
+g0 <- gsim_genetic_values(bed0,state)
+stopifnot(max(abs(g0-drop((h1+h2-1) %*% effects)))<1e-12)
+base_mean <- mean(g0)
+```
+
+We will also report allele frequencies and heterozygosity at these same six markers. For this tiny teaching panel, applying an identity effect matrix with zero center returns six dosage columns through the public accumulation interface. This deliberately materializes only 32 by 6 values; it is not a whole-genome extraction workflow.
+
+```{r}
+#| label: marker-reporting
+dosage_effects <- diag(length(markers))
+dimnames(dosage_effects) <- list(markers,markers)
+dosage_state <- gsim_trait_state(dosage_effects,center=0)
+d0 <- gsim_genetic_values(bed0,dosage_state)
+stopifnot(identical(dimnames(d0),dimnames(h1)),
+          max(abs(d0-(h1+h2)))==0)
+summarize_cohort <- function(bed,policy,generation) {
+  g <- gsim_genetic_values(bed,state)
+  d <- gsim_genetic_values(bed,dosage_state)
+  stopifnot(all(d %in% 0:2))
+  p <- colMeans(d)/2
+  # A second route to the mean, independent of individual aggregation.
+  mean_from_p <- sum((2*p-1)*effects[,"trait"])
+  stopifnot(abs(mean(g)-mean_from_p)<1e-12)
+  data.frame(policy=policy,generation=generation,mean_genetic=mean(g),
+    gain=mean(g)-base_mean,genetic_variance=var(drop(g)),
+    mean_HE=mean(2*p*(1-p)),mean_HO=mean(colMeans(d==1)),
+    polymorphic=sum(p>0 & p<1))
+}
+knitr::kable(summarize_cohort(bed0,"Founders",0),digits=4,row.names=FALSE)
+```
+
+Here $H_E=2p(1-p)$ describes two independent gene copies drawn with replacement from the cohort's marker frequencies. $H_O$ is the observed fraction of heterozygous individuals. Their difference does not by itself identify inbreeding. We keep all six markers in the denominator, including any that later fix. No independent-copy finite-sample correction is used for related offspring.
+
+**Question 1.** Why not center marker dosages separately in every generation?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Using each cohort's own mean dosage would force the cohort mean genetic value to zero and hide gain. One architecture and one reporting base let us compare genetic values over time. Marker frequencies may change; the centers used for reporting do not.
+:::
+
+## 4. Generate records, select parents and simulate offspring
+
+Generate one phenotype per candidate as $y_i=g_i+e_i$, with residual variance 0.04 trait units squared and no fixed or permanent-environment contribution. Select on this observable phenotype, not hidden genetic truth. Genetic truth is read separately to evaluate outcomes after the decision.
+
+The comparison selects parents randomly with the same role quotas. It shares founder inputs and numbered seed schedules with the phenotype strategy. Diverging selected pools and pedigrees still produce different later populations; the comparison is one illustrative realization per policy.
+
+```{r}
+#| label: simulate-programme
+run_programme <- function(policy,generations=3L) {
+  current <- phase0; bed <- bed0; pedigree <- pedigree0
+  animals <- ids; sex <- parent_table$sex
+  history <- list(summarize_cohort(bed,policy,0))
+  transitions <- list()
+  for(t in seq_len(generations)) {
+    g <- gsim_genetic_values(bed,state)
+    records <- gsim_records(g,residual_covariance=.04,seed=200+t)
+    observed <- records$records
+    stopifnot(all(observed$trait=="trait"),!anyDuplicated(observed$animal))
+    scores <- setNames(observed$value,observed$animal)
+    selection <- if(policy=="Phenotype") {
+      gsim_select(animals,c(M=4,F=4),scores=scores,method="score",strata=sex)
+    } else {
+      gsim_select(animals,c(M=4,F=4),method="random",strata=sex,seed=400+t)
+    }
+    sires <- selection$animal[selection$selected & selection$stratum=="M"]
+    dams <- selection$animal[selection$selected & selection$stratum=="F"]
+    children <- sprintf("g%d-%02d",t,1:32)
+    mating <- gsim_mate(pedigree,sires,dams,children,seed=300+t,
+      sex=setNames(rep(c("M","F"),16),children))
+    plan <- mating$offspring
+    # Truth evaluates the already specified parentage; it did not select parents.
+    parent_expectation <- mean((g[plan$sire,"trait"]+g[plan$dam,"trait"])/2)
+    next_cohort <- gsim_simulate_cohort(current,mating,seed=500+t,
+      output=file.path(work,paste0(policy,"-generation",t)))
+    offspring_g <- gsim_genetic_values(next_cohort,state)
+    # At every marker, each parent transmits one of its two alleles.
+    parental_d <- gsim_genetic_values(bed,dosage_state)
+    child_d <- gsim_genetic_values(next_cohort,dosage_state)
+    sire_d <- parental_d[plan$sire,,drop=FALSE]
+    dam_d <- parental_d[plan$dam,,drop=FALSE]
+    lower <- (sire_d==2)+(dam_d==2)
+    upper <- (sire_d>0)+(dam_d>0)
+    stopifnot(all(child_d>=lower & child_d<=upper),
+      identical(attr(offspring_g,"trait_state_checksum"),state$checksum))
+    transitions[[t]] <- data.frame(policy=policy,generation=t,
+      parent_expectation=parent_expectation,offspring_mean=mean(offspring_g),
+      mendelian_mean=mean(offspring_g)-parent_expectation)
+    history[[t+1L]] <- summarize_cohort(next_cohort,policy,t)
+    pedigree <- mating$pedigree; current <- next_cohort; bed <- next_cohort
+    animals <- children; sex <- plan$sex
+  }
+  list(history=do.call(rbind,history),transitions=do.call(rbind,transitions))
+}
+phenotype <- run_programme("Phenotype")
+random <- run_programme("Random")
+history <- rbind(phenotype$history,random$history)
+transitions <- rbind(phenotype$transitions,random$transitions)
+stopifnot(all(history$mean_HE>=0 & history$mean_HE<=.5),
+          all(history$mean_HO>=0 & history$mean_HO<=1),
+          all(history$polymorphic>=0 & history$polymorphic<=6),
+          all(history$gain[history$generation==0]==0))
+knitr::kable(history,digits=4,row.names=FALSE)
+```
+
+`gsim_simulate_cohort()` reuses phased parents and writes only the new cohort. All used parents must be in that one phased dataset. The full pedigree is retained separately. Recombination redistributes existing alleles; it does not introduce new marker alleles here.
+
+```{r}
+#| label: fig-response
+#| fig-cap: "One three-generation realization for each policy, on the same founder base and six-marker reporting panel. These curves are illustrative outcomes, not estimated expected responses."
+#| fig-width: 10
+#| fig-height: 5
+local({
+  old <- par(mfrow=c(1,2)); on.exit(par(old))
+  for(metric in c("gain","mean_HE")) {
+    values <- history[[metric]]
+    plot(range(history$generation),range(values),type="n",xlab="Generation",
+         ylab=if(metric=="gain") "Gain (trait units)" else "Mean marker H_E")
+    for(k in seq_along(c("Phenotype","Random"))) {
+      rows <- history$policy==c("Phenotype","Random")[k]
+      lines(history$generation[rows],values[rows],type="b",pch=15+k,
+            col=c("#247BA0","#D8A47F")[k])
+    }
+    legend("topleft",c("Phenotype","Random"),col=c("#247BA0","#D8A47F"),
+           lty=1,pch=16:17,bty="n")
+  }
+})
+```
+
+**Question 2.** Must phenotype selection increase genetic merit in every realized generation?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. Phenotype selection uses noisy records, and finite parent use and Mendelian sampling add variation. The genetic architecture is fixed but allele frequencies, genetic variance and linkage disequilibrium can change. One trajectory cannot establish the expected advantage or risk of a policy. Replicated simulations would be needed for that comparison.
+:::
+
+## 5. Explain offspring deviations from parental expectations
+
+For additive inheritance, each offspring's conditional genetic expectation is the parental mean. The realized offspring value includes Mendelian sampling. Consequently, a finite cohort mean can differ from the parentage-weighted expectation even when inheritance is implemented correctly.
+
+```{r}
+#| label: mendelian-sampling
+knitr::kable(transitions,digits=4,row.names=FALSE)
+stopifnot(max(abs(transitions$offspring_mean-
+  transitions$parent_expectation-transitions$mendelian_mean))<1e-12)
+```
+
+The difference column is a realized mean Mendelian-sampling deviation. It is not a prediction-error estimate or a test that the simulator is unbiased. The neutral selection policy can also show realized gain or loss through finite sampling.
+
+## 6. Read gain and diversity together
+
+Genetic variance is the sample variance of simulated additive values in each cohort. It can change through allele-frequency shifts and associations between linked markers. Mean marker $H_E$ measures a different aspect of variation. One marker has zero trait effect but still contributes to the marker-diversity summary.
+
+These six synthetic markers do not estimate genome-wide diversity, effective population size or pedigree inbreeding. Neither higher gain nor a family quota alone establishes a better programme. Programme comparisons also need declared constraints, generation intervals and costs. Generations here are not calendar years.
+
+## Exercises
+
+1. Verify the founder mean from allele frequencies and fixed effects. Explain why this identity continues to hold after selection.
+2. Recalculate founder values using founder sample allele frequencies as fixed centers. Show that the founder mean becomes zero, while gain relative to that founder mean is unchanged if those centers stay fixed.
+3. Explain what changes if selection uses simulated genetic truth rather than phenotypes, and how that decision should be labelled.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+p0 <- colMeans(d0)/2
+stopifnot(abs(sum((2*p0-1)*effects[,"trait"])-base_mean)<1e-12)
+state_base <- gsim_trait_state(effects,center=setNames(2*p0,markers))
+g0_base <- gsim_genetic_values(bed0,state_base)
+stopifnot(abs(mean(g0_base))<1e-12)
+constant_shift <- sum((1-2*p0)*effects[,"trait"])
+stopifnot(max(abs(g0_base-g0-constant_shift))<1e-12)
+```
+With fixed effects, changing fixed centers adds the same constant to every individual's value in every cohort, leaving differences from the founder mean unchanged. Selecting on true genetic values removes evaluation uncertainty from the decision and creates an oracle strategy. Pass `oracle=TRUE` to `gsim_select()` when deliberately supplying truth scores; it is not a feasible real-population evaluation.
+:::
+
+## Package connection and next topic
+
+`gsim` supplies inheritance, persistent genetic values and observable records through its existing [breeding building blocks](https://github.com/psoerensen/gsim/blob/main/docs/design/breeding_building_blocks.md). `gsel` owns programme policies and objectives; `gpop` owns population summaries and their assumptions. No package interfaces are added here.
+
+Next connect selection response to relationships and inbreeding, or introduce an externally fitted genetic evaluation in place of the phenotype score. Keep simulated truth reserved for evaluation and retain the same reporting base.

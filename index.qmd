@@ -41,6 +41,8 @@ After completing the course, students should be able to:
 
 - [Practical 7: Selection policies and mating plans](tutorials/selection_mating_plans.qmd) — eligibility, quotas, parent contributions and random versus balanced mating.
 
+- [Practical 8: Simulating selection response](tutorials/simulating_selection_response.qmd) — offspring inheritance, fixed-base gain and marker diversity.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).

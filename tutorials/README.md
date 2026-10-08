@@ -11,6 +11,8 @@
 
 - [Selection policies and mating plans](selection_mating_plans.qmd): Practical 7, requiring gsim for selection and parentage mechanics.
 
+- [Simulating selection response](simulating_selection_response.qmd): Practical 8, using gsim and a synthetic phased panel without downloads.
+
 Practicals 3–5 require qgg and the shared script in scripts/mouse_practical_helpers.R.
 
 Render an individual page from the repository root, for example:
