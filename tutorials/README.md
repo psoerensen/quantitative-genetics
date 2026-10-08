@@ -23,6 +23,8 @@ See the [course map](course_map.qmd) for prerequisites and routes through both c
 
 - [Genotype-by-environment interaction and heritability](genotype_environment_heritability.qmd): Practical 12, a base-R extension using a balanced synthetic replicated-genotype experiment.
 
+- [Association mapping, covariates and multiple testing](association_mapping.qmd): Practical 13, a small base-R synthetic scan with explicit covariates and allele orientation.
+
 Practicals 3–5 require qgg and the shared script in scripts/mouse_practical_helpers.R.
 
 Render an individual page from the repository root, for example:

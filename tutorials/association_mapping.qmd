@@ -1,0 +1,237 @@
+---
+title: "Association mapping, covariates and multiple testing"
+subtitle: "Quantitative Genetics Practical 13: A small synthetic GWAS"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Fit additive single-marker associations with declared covariates; report called sample sizes and allele orientation; explain confounding and linked-marker signals; distinguish family-wise error control from false-discovery-rate procedures; and interpret a Manhattan-style plot without equating significance with causation.
+
+Continue from the single-locus model in [Practical 2](mouse_single_locus.qmd). Read alongside the slides on [GWAS](../slides/introduction_quantitative_genetics.qmd#genome-wide-association-study-gwas), [marker–QTL linkage disequilibrium](../slides/introduction_quantitative_genetics.qmd#why-gwas-works-markerqtl-linkage-disequilibrium) and [single-marker testing](../slides/introduction_quantitative_genetics.qmd#how-gwas-works-single-marker-test). This practical uses base R and explicitly synthetic data, not a genome-wide analysis of the mouse dataset.
+
+## 1. Define the population, marker coding and phenotype model
+
+Use 160 independent diploid individuals in two groups, with 100 hypothetical biallelic markers. Dosage counts allele G, with A as the other allele. Marker positions and chromosome assignments are illustrative metadata, not real genomic coordinates. The genotype matrix is small enough to retain in memory.
+
+Marker m1 contributes directly to the generating phenotype. Marker m2 has identical dosages to m1 and is a perfect tag, with no separate direct effect. Marker m3 has a large group-frequency difference but no direct effect. The groups also differ in environment, creating a path from group membership to both genotypes and phenotype.
+
+```{r}
+#| label: synthetic-gwas-data
+set.seed(20261013)
+n <- 160L; m <- 100L
+ids <- sprintf("animal%03d",seq_len(n))
+markers <- paste0("m",seq_len(m))
+group <- factor(rep(c("A","B"),each=n/2))
+sex <- factor(rep(c("F","M"),n/2))
+p <- runif(m,.2,.5)
+M <- matrix(rbinom(n*m,2,rep(p,each=n)),n,m,dimnames=list(ids,markers))
+M[,"m1"] <- rbinom(n,2,ifelse(group=="A",.2,.8))
+M[,"m2"] <- M[,"m1"]
+M[,"m3"] <- rbinom(n,2,ifelse(group=="A",.1,.9))
+M[,"m100"] <- 0 # Invariant marker, explicitly excluded from testing.
+# Phenotype is generated before introducing missing calls at another marker.
+y <- 2+.8*M[,"m1"]+4*(group=="B")+.5*(sex=="F")+rnorm(n,sd=1.5)
+M[sample(seq_len(n),8),"m5"] <- NA_real_
+records <- data.frame(animal=ids,group=group,sex=sex,phenotype=y)
+metadata <- data.frame(marker=markers,chromosome=rep(1:5,each=20),
+                       position_bp=rep(seq(1000,20000,by=1000),5),
+                       counted_allele="G",other_allele="A")
+stopifnot(identical(records$animal,rownames(M)),
+          identical(metadata$marker,colnames(M)),all(na.omit(c(M)) %in% 0:2))
+knitr::kable(data.frame(marker=c("m1","m2","m3","m5","m100"),
+  called=colSums(!is.na(M)) [c("m1","m2","m3","m5","m100")]),row.names=FALSE)
+```
+
+Here group is a known synthetic covariate. In real data, population structure and environmental differences need their own justification and measurement; a group label is not a substitute for that analysis. The individuals here are independent. Ordinary regression would need additional treatment for pedigree-related or otherwise correlated individuals.
+
+## 2. Define the association hypothesis
+
+For marker dosage $d_i$, fit
+
+$$y_i=\mu+\gamma_{\mathrm{group}(i)}+
+ \eta_{\mathrm{sex}(i)}+\beta d_i+\epsilon_i.$$
+
+The marker test asks whether its regression coefficient $\beta$ is zero conditional on the declared covariates. It is an additive dosage test with one degree of freedom. A genotype-factor test or additive-plus-dominance test is a different hypothesis. The coefficient is in trait units per counted G allele and is not a genotype's total breeding value.
+
+Only animals with a called marker and complete covariates/phenotype enter that marker's regression. No imputation is used. Exclude invariant markers and rank-deficient designs before forming the tested family. Model-based t-test p-values depend on the regression assumptions; multiple-testing adjustment cannot repair confounding, correlated errors or misspecified effects. Exact Gaussian-error inference requires a correctly specified conditional mean and error model; this illustrative marginal scan is not a calibration study.
+
+```{r}
+#| label: association-scan
+scan_markers <- function(adjusted=TRUE,genotypes=M) {
+  do.call(rbind,lapply(colnames(genotypes),function(marker) {
+    dosage <- genotypes[,marker]
+    use <- !is.na(dosage) & complete.cases(records)
+    data <- records[use,]; data$dosage <- dosage[use]
+    result <- data.frame(marker=marker,called=sum(use),
+      allele_frequency=mean(data$dosage)/2,beta=NA_real_,SE=NA_real_,
+      p_value=NA_real_,status="tested")
+    if(length(unique(data$dosage))<2) {
+      result$status <- "invariant"; return(result)
+    }
+    formula <- if(adjusted) phenotype~group+sex+dosage else phenotype~dosage
+    X <- model.matrix(formula,data)
+    if(qr(X)$rank<ncol(X) || nrow(X)<=ncol(X)) {
+      result$status <- "unestimable"; return(result)
+    }
+    fit <- lm(formula,data=data)
+    coefficient <- coef(summary(fit))["dosage",]
+    result$beta <- coefficient["Estimate"]
+    result$SE <- coefficient["Std. Error"]
+    result$p_value <- coefficient["Pr(>|t|)"]
+    result
+  }))
+}
+unadjusted <- scan_markers(FALSE)
+adjusted <- scan_markers(TRUE)
+stopifnot(sum(adjusted$status=="tested")==99,
+          adjusted$status[adjusted$marker=="m100"]=="invariant",
+          adjusted$called[adjusted$marker=="m5"]==152)
+focus <- c("m1","m2","m3")
+knitr::kable(data.frame(marker=focus,
+  unadjusted_beta=unadjusted$beta[match(focus,unadjusted$marker)],
+  adjusted_beta=adjusted$beta[match(focus,adjusted$marker)],
+  unadjusted_p=unadjusted$p_value[match(focus,unadjusted$marker)],
+  adjusted_p=adjusted$p_value[match(focus,adjusted$marker)]),digits=5,row.names=FALSE)
+```
+
+Unadjusted associations can combine direct effects, tagging through marker correlation, and group-linked environmental differences. The adjusted coefficient is a within-covariate regression contrast. Adding the known group term addresses that declared environmental mean shift; it does not establish that every source of confounding has been removed in real data.
+
+### Check the covariate-adjusted coefficient independently
+
+Residualize both phenotype and m1 dosage against the same covariates. Their residual regression slope equals the full regression's marker coefficient. Residualizing only phenotype while leaving dosage unadjusted would not generally produce the same result.
+
+```{r}
+#| label: partial-regression-check
+X0 <- model.matrix(~group+sex,data=records)
+y_residual <- lm.fit(X0,y)$residuals
+d_residual <- lm.fit(X0,M[,"m1"])$residuals
+partial_beta <- sum(d_residual*y_residual)/sum(d_residual^2)
+partial_error <- y_residual-partial_beta*d_residual
+partial_SE <- sqrt(sum(partial_error^2)/(n-ncol(X0)-1)/sum(d_residual^2))
+i1 <- match("m1",adjusted$marker)
+stopifnot(abs(partial_beta-adjusted$beta[i1])<1e-12,
+          abs(partial_SE-adjusted$SE[i1])<1e-12)
+```
+
+## 3. State the multiple-testing family
+
+There are 99 estimable marker tests in this declared panel. Adjustment covers that family within the prespecified covariate-adjusted scan. The unadjusted scan is an instructional sensitivity comparison, not an additional source from which to choose the smallest p-value. If selecting discoveries across several models or traits, the testing policy must reflect those additional choices.
+
+At a family-wise level of 0.05, Bonferroni uses a raw threshold $0.05/99$. Holm also controls family-wise error and can be less conservative. Benjamini–Hochberg targets false discovery rate under independence or appropriate positive dependence; Benjamini–Yekutieli handles more general dependence. FDR concerns the expected false proportion among rejected hypotheses, not the probability that one particular marker is false. See the [R p.adjust documentation](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html) for the supported procedures.
+
+```{r}
+#| label: multiple-testing
+valid <- adjusted$status=="tested"
+number_tests <- sum(valid)
+for(method in c("bonferroni","holm","BH","BY")) {
+  adjusted[[method]] <- NA_real_
+  adjusted[[method]][valid] <- p.adjust(adjusted$p_value[valid],method=method)
+}
+stopifnot(max(abs(adjusted$bonferroni[valid]-
+  pmin(1,number_tests*adjusted$p_value[valid])))<1e-12)
+summary <- data.frame(rule=c("Raw p < 0.05","Bonferroni","Holm","BH","BY"),
+  rejected=c(sum(adjusted$p_value[valid]<.05),
+             vapply(adjusted[valid,c("bonferroni","holm","BH","BY")],
+                    function(p) sum(p<.05),integer(1))))
+knitr::kable(summary,row.names=FALSE)
+top <- adjusted[valid,]
+top <- top[order(top$p_value,top$marker),]
+knitr::kable(head(top[,c("marker","called","beta","SE","p_value",
+                        "bonferroni","holm","BH","BY")],10),digits=5,row.names=FALSE)
+```
+
+Counts of rejected hypotheses are outcomes of this realization. They do not estimate power or false-discovery rates. LD does not invalidate Bonferroni or Holm error control when individual null p-values are valid. We do not infer that this scan meets every dependence condition of BH merely from the presence of linked markers.
+
+## 4. Plot the marker scan using aligned metadata
+
+Use chromosome and position only for displaying results. The synthetic panel is not a dense real genome, and the plotted threshold applies to these 99 tests rather than a universal GWAS threshold.
+
+```{r}
+#| label: fig-association-scan
+#| fig-cap: "Unadjusted and covariate-adjusted scans of the same synthetic panel. The dashed line is the Bonferroni threshold for the 99 estimable tests; model adjustment and multiple-testing adjustment address different problems."
+#| fig-width: 10
+#| fig-height: 6
+stopifnot(identical(metadata$marker,adjusted$marker),
+          identical(adjusted$marker,unadjusted$marker))
+x <- metadata$position_bp+(metadata$chromosome-1)*22000
+colors <- c("#247BA0","#86B7A3")[1+(metadata$chromosome %% 2)]
+local({
+  old <- par(mfrow=c(2,1)); on.exit(par(old))
+  for(label in c("Unadjusted","Adjusted")) {
+    results <- if(label=="Unadjusted") unadjusted else adjusted
+    keep <- results$status=="tested"
+    significance <- -log10(results$p_value[keep])
+    plot(x[keep],significance,pch=16,col=colors[keep],xaxt="n",
+      main=label,xlab="Hypothetical chromosome",ylab="-log10(p)",
+      ylim=c(0,max(significance,-log10(.05/number_tests))*1.1))
+    axis(1,at=(0:4)*22000+10500,labels=1:5)
+    abline(h=-log10(.05/number_tests),lty=2)
+    at <- match(focus,results$marker)
+    text(x[at],-log10(results$p_value[at]),labels=focus,pos=3,cex=.8)
+  }
+})
+```
+
+Covariate adjustment changes the model and its coefficients. Multiple-testing adjustment changes the rejection rule across hypotheses. Correcting many confounded p-values does not make their interpretation causal.
+
+## 5. A linked signal is not a separate causal effect
+
+Markers m1 and m2 have identical dosages, so their separate regressions return identical coefficients and p-values. The phenotype-generating equation names m1, but the observed marker association data alone cannot distinguish the two explanations.
+
+```{r}
+#| label: tagging-and-identifiability
+i2 <- match("m2",adjusted$marker)
+stopifnot(adjusted$beta[i1]==adjusted$beta[i2],
+          adjusted$p_value[i1]==adjusted$p_value[i2],
+          abs(cor(M[,"m1"],M[,"m2"])^2-1)<1e-12)
+joint <- model.matrix(~group+sex+M[,"m1"]+M[,"m2"],data=records)
+stopifnot(qr(joint)$rank<ncol(joint))
+```
+
+Adding both perfectly tagged markers to one model produces a rank-deficient design. With imperfect LD, further analysis may help distinguish signals but does not itself prove biological causation. Replication, fine mapping and functional evidence address additional questions. A tagged marker can be genuinely associated even without a direct effect; calling every such signal a statistical false positive would confuse association with causality.
+
+**Question 1.** Does the smallest p-value identify the largest genetic contribution?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. Significance depends on estimated effect, uncertainty, allele frequency, sample size and model. It is not the fraction of trait variance explained or evidence that a variant is causal. Single-marker effect estimates can also reflect LD and be exaggerated when selected for unusually strong discovery results.
+:::
+
+## 6. Connect to the mouse practicals and real analysis
+
+[Practical 2](mouse_single_locus.qmd) analyzes a mouse marker with additive and dominance contrasts. [Practicals 3–5](mouse_genetic_parameters.qmd) use relationships for variance estimation and genetic evaluation. The mouse population contains relatives, so this independent-individual OLS scan should not be transferred directly and treated as calibrated inference.
+
+A real association workflow must establish phenotype and marker identity alignment, allele coding, sample inclusion, missing-call handling, covariates, relatedness/structure treatment and the testing family. Association testing and genetic prediction have different targets. Discovering significant markers does not by itself validate breeding-value predictions in a new cohort; use [Practical 10](validating_selection_predictions.qmd) for that distinction.
+
+## Exercises
+
+1. Reverse the counted allele at m1 using $d'=2-d$. Verify the slope changes sign while its standard error and p-value remain the same.
+2. If ten traits were scanned at the same 99 markers and discoveries were selected across all combinations, what testing family would a simple Bonferroni policy use?
+3. Explain why m2 can be associated without a direct effect, and why m3's unadjusted association needs a different interpretation.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+reversed <- M; reversed[,"m1"] <- 2-reversed[,"m1"]
+reversed_results <- scan_markers(TRUE,reversed)
+stopifnot(abs(reversed_results$beta[i1]+adjusted$beta[i1])<1e-12,
+  abs(reversed_results$SE[i1]-adjusted$SE[i1])<1e-12,
+  abs(reversed_results$p_value[i1]-adjusted$p_value[i1])<1e-12)
+number_marker_trait_tests <- 10*number_tests
+c(tests=number_marker_trait_tests,raw_threshold=.05/number_marker_trait_tests)
+```
+The simple combined family has 990 marker/trait tests, assuming all are estimable and included under that declared policy. The tagged marker carries information about the causal genotype. The group-correlated marker can instead carry information about an environmental mean shift. Both can associate with phenotype; the mechanism must not be inferred solely from the p-value.
+:::
+
+## Package connection and next topic
+
+Association estimation belongs to the existing estimation/association tools. `gpop` supplies population and LD summaries, `gsim` supplies biological known-truth simulation, and `gsel` consumes genetic evaluations for decisions. This base-R lesson adds no package APIs or large-genome workflow.
+
+Return to the [course map](course_map.qmd). A useful next population-genetics extension is mutation–selection and mutation–drift balance, joining the separate evolutionary forces already introduced.

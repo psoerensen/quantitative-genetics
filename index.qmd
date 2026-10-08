@@ -53,6 +53,8 @@ Start with the [course map](tutorials/course_map.qmd) for prerequisites, R requi
 
 - [Practical 12: Genotype-by-environment interaction and heritability](tutorials/genotype_environment_heritability.qmd) — reaction norms, replicated trials and broad-sense entry-mean heritability.
 
+- [Practical 13: Association mapping, covariates and multiple testing](tutorials/association_mapping.qmd) — a synthetic marker scan, confounding, linked signals and testing families.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).

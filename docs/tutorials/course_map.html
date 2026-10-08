@@ -160,6 +160,10 @@ ul.task-list li input[type="checkbox"] {
     <a class="dropdown-item" href="../tutorials/genotype_environment_heritability.html">
  <span class="dropdown-text">12. Genotype by environment and heritability</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../tutorials/association_mapping.html">
+ <span class="dropdown-text">13. Association mapping and multiple testing</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item">
@@ -187,7 +191,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#quantitative-genetics-sequence" id="toc-quantitative-genetics-sequence" class="nav-link" data-scroll-target="#quantitative-genetics-sequence">Quantitative-genetics sequence</a></li>
   <li><a href="#coverage-alongside-the-slides" id="toc-coverage-alongside-the-slides" class="nav-link" data-scroll-target="#coverage-alongside-the-slides">Coverage alongside the slides</a>
   <ul class="collapse">
-  <li><a href="#topics-needing-additional-worked-practicals" id="toc-topics-needing-additional-worked-practicals" class="nav-link" data-scroll-target="#topics-needing-additional-worked-practicals">Topics needing additional worked practicals</a></li>
+  <li><a href="#further-extensions" id="toc-further-extensions" class="nav-link" data-scroll-target="#further-extensions">Further extensions</a></li>
   </ul></li>
   <li><a href="#suggested-teaching-routes" id="toc-suggested-teaching-routes" class="nav-link" data-scroll-target="#suggested-teaching-routes">Suggested teaching routes</a>
   <ul class="collapse">
@@ -380,6 +384,11 @@ ul.task-list li input[type="checkbox"] {
 <td>How does replication across environments define genetic variance and entry-mean heritability?</td>
 <td>QG 2; variance and ANOVA; fits before QG 3 in the slide flow</td>
 </tr>
+<tr class="odd">
+<td><a href="../tutorials/association_mapping.html">QG 13: Association mapping</a></td>
+<td>How do covariates, linked markers and multiple testing affect inference?</td>
+<td>QG 2; PG 1, PG 5 and PG 8; linear regression</td>
+</tr>
 </tbody>
 </table>
 <p>Use the <a href="../slides/introduction_quantitative_genetics.html">quantitative-genetics slides</a> to connect trait variation, gene action, covariance, heritability and response to selection. Reading a predecessor can provide conceptual preparation without running its full code.</p>
@@ -431,29 +440,18 @@ ul.task-list li input[type="checkbox"] {
 <td>Prediction validation</td>
 <td>QG 5 and QG 10; the latter uses a synthetic phenotype predictor, not a fitted breeding-value evaluation</td>
 </tr>
-</tbody>
-</table>
-<section id="topics-needing-additional-worked-practicals" class="level3">
-<h3 class="anchored" data-anchor-id="topics-needing-additional-worked-practicals">Topics needing additional worked practicals</h3>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Topic in the slides</th>
-<th>Current limit</th>
-<th>Suggested next exercise</th>
-</tr>
-</thead>
-<tbody>
 <tr class="odd">
-<td><a href="../slides/introduction_quantitative_genetics.html#genome-wide-association-study-gwas">GWAS</a> and <a href="../slides/introduction_quantitative_genetics.html#why-gwas-works-markerqtl-linkage-disequilibrium">marker–QTL LD</a></td>
-<td>QG 2 studies one marker’s effects; it does not qualify causal interpretation or genome-wide significance</td>
-<td>A small association analysis with covariates, multiple testing and an explicit distinction between association and causation</td>
+<td>Association mapping, covariates and multiple testing</td>
+<td>QG 13; a small synthetic scan, tagged signals and explicit testing families</td>
 </tr>
 </tbody>
 </table>
+<section id="further-extensions" class="level3">
+<h3 class="anchored" data-anchor-id="further-extensions">Further extensions</h3>
 <p>For additional applications, the population-genetics slides discuss conservation, medicine, forensics and the molecular clock. PG 1–7 supply foundations for those topics, but do not provide dedicated applied practicals. Mutation–drift and mutation–selection balance also need their own worked synthesis if included in assessment.</p>
 <p>The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.</p>
 <p>PG 8 now supplies formal HWE inference. Teach it after PG 2–3 when the aim includes hypothesis testing, keeping observed departures separate from explanations of their cause.</p>
+<p>QG 13 now supplies a worked association scan. Its synthetic OLS model does not qualify a real GWAS in related animals; transfer to the mouse population requires an appropriate relatedness model.</p>
 </section>
 </section>
 <section id="suggested-teaching-routes" class="level2">
@@ -526,6 +524,10 @@ ul.task-list li input[type="checkbox"] {
 <td>Base R; synthetic replicated-genotype data; no downloads</td>
 </tr>
 <tr class="odd">
+<td>QG 13</td>
+<td>Base R; synthetic markers and phenotypes; no downloads</td>
+</tr>
+<tr class="even">
 <td>QG 11</td>
 <td><code>gsim</code> and the relationship helper; small synthetic paired runs; no downloads</td>
 </tr>
