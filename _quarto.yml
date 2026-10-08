@@ -4,6 +4,7 @@ project:
   render:
     - index.qmd
     - tutorials/mouse_quantitative_traits.qmd
+    - tutorials/mouse_single_locus.qmd
     - slides/introduction_quantitative_genetics.qmd
     - slides/introduction_quantitative_genetics_narrated.qmd
   resources:
@@ -20,8 +21,12 @@ website:
         href: slides/introduction_quantitative_genetics.html
       - text: "Narrated slides"
         href: slides/introduction_quantitative_genetics_narrated.html
-      - text: "Tutorial"
-        href: tutorials/mouse_quantitative_traits.html
+      - text: "Tutorials"
+        menu:
+          - text: "1. Quantitative traits"
+            href: tutorials/mouse_quantitative_traits.html
+          - text: "2. Single-locus variation"
+            href: tutorials/mouse_single_locus.html
       - text: "qgteach"
         href: https://psoerensen.github.io/qgteach/
 

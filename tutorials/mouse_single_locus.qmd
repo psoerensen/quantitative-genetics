@@ -1,0 +1,253 @@
+---
+title: "From genotype effects to quantitative variation"
+subtitle: "Practical 2: A single-locus model in the mouse population"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  echo: true
+  error: false
+---
+
+## Learning objectives
+
+Calculate genotype and allele frequencies with explicit called denominators; fit and interpret additive and dominance genotype contrasts; distinguish a homozygote contrast from an allele-substitution effect; and explain why variation associated with one marker is not total heritability.
+
+Continue from [Practical 1](mouse_quantitative_traits.qmd). Read alongside the slides on [gene action at one locus](../slides/introduction_quantitative_genetics.qmd#modes-of-gene-action-at-one-locus) and [phenotype and variance](../slides/introduction_quantitative_genetics.qmd#from-phenotype-to-variance). All analysis uses base R.
+
+## Biological question and data
+
+Does body weight differ among genotypes at marker `M227`, and how can we describe these differences using a single-locus model?
+
+The mouse file now includes markers `M227` and `M1139` alongside the phenotype and family fields used in Practical 1. We focus on `M227`. `AA`, `AB` and `BB` are teaching allele labels; they do not establish nucleotide identity or identify a causal variant. Trait units are not supplied in the file metadata, so figures use recorded units.
+
+### Load the marker data
+
+The URL fixes a public dataset revision and the checksum verifies its contents. Downloaded data stay in R's temporary directory.
+
+```{r}
+#| label: load-marker-data
+revision <- "224a4024f558ff9c0a481468979178e33b81b27b"
+data_url <- paste0("https://raw.githubusercontent.com/psoerensen/bgcourse/",
+                   revision, "/data/mouseqtl.rds")
+data_file <- file.path(tempdir(), "qg2-mouseqtl.rds")
+if (!file.exists(data_file)) {
+  download.file(data_url, data_file, mode = "wb", quiet = TRUE)
+}
+stopifnot(unname(tools::md5sum(data_file)) ==
+            "88b7ab5e5d57a57d2e5526170be9f2c8")
+mouse <- readRDS(data_file)
+stopifnot(is.data.frame(mouse),
+          all(c("BW", "sex", "reps", "M227") %in% names(mouse)),
+          all(na.omit(as.character(mouse$M227)) %in% c("AA", "AB", "BB")))
+str(mouse)
+colSums(is.na(mouse))
+```
+
+## 1. Count genotypes and alleles
+
+Let $p$ be the frequency of **B**, the counted allele, and $q=1-p$ the frequency of A. For $n_c$ called diploid individuals,
+
+$$p=\frac{n_{AB}+2n_{BB}}{2n_c},\qquad q=1-p.$$
+
+**Question 1.** How many `M227` calls are missing? Why must they be excluded from the allele-count denominator?
+
+```{r}
+#| label: frequencies
+called <- !is.na(mouse$M227)
+counts <- table(factor(as.character(mouse$M227[called]),
+                       levels = c("AA", "AB", "BB")))
+n_called <- sum(counts)
+p <- unname((counts["AB"] + 2 * counts["BB"]) / (2 * n_called))
+q <- 1 - p
+observed <- as.numeric(counts) / n_called
+hwe <- c(q^2, 2*p*q, p^2)
+knitr::kable(data.frame(genotype = names(counts), count = as.numeric(counts),
+                       observed_frequency = observed,
+                       HWE_model_frequency = hwe), digits = 4)
+c(called = n_called, missing = sum(!called), p_B = p, q_A = q)
+```
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+There are `r sum(!called)` missing calls and `r n_called` called individuals. B has frequency `r round(p, 4)`. Missing genotypes do not contribute observed chromosomes. The HWE column is an expectation under random union of gametes at the supplied frequencies, not an HWE test. Family structure and the cross design require consideration before treating these mice as an unrelated equilibrium sample.
+:::
+
+## 2. Inspect body weight by genotype
+
+Use the same complete records for both models below. Explicit exclusions make model comparisons meaningful.
+
+```{r}
+#| label: analysis-records
+keep <- complete.cases(mouse[c("BW", "sex", "reps", "M227")])
+analysis <- droplevels(mouse[keep, ])
+c(included = nrow(analysis), excluded = sum(!keep))
+aggregate(BW ~ M227, data = analysis, FUN = mean)
+```
+
+```{r}
+#| label: fig-genotype-weight
+#| fig-cap: "Observed body weight distributions by M227 genotype. These are unadjusted phenotype comparisons."
+boxplot(BW ~ M227, data = analysis, col = "#86B7A3",
+        xlab = "M227 genotype", ylab = "Body weight (recorded units)")
+```
+
+**Question 2.** Describe the direction and overlap of the genotype differences. Could unequal sex or replicate composition contribute?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Compare both means and within-genotype spread. Unadjusted means combine marker association with other group differences. These plots do not establish that M227 is causal, nor do they separate family and environmental effects.
+:::
+
+## 3. Define additive and dominance contrasts
+
+Write the genotype contributions relative to the midpoint of the two homozygotes as
+
+$$g_{AA}=-a,\qquad g_{AB}=d,\qquad g_{BB}=a.$$
+
+Thus $a=(g_{BB}-g_{AA})/2$ is half the homozygote difference, and $d=g_{AB}-(g_{AA}+g_{BB})/2$ is the heterozygote departure from their midpoint. A positive $d$ does not require AB to exceed both homozygotes.
+
+| Genotype | B count $N_B$ | Additive contrast $x=N_B-1$ | Heterozygote indicator $z$ |
+| --- | --- | --- | --- |
+| AA | 0 | -1 | 0 |
+| AB | 1 | 0 | 1 |
+| BB | 2 | 1 | 0 |
+
+The fitted model is
+
+$$BW_i=\mu+\beta_{sex(i)}+\gamma_{rep(i)}+a x_i+d z_i+e_i.$$
+
+It assumes common genotype contrasts across sex and replicate groups. The heterozygote indicator must flag **AB**, not BB. Convert factor labels to character before named-vector lookup to avoid relying on factor level numbers.
+
+```{r}
+#| label: genotype-coding
+analysis$x <- unname(c(AA = -1, AB = 0, BB = 1)[as.character(analysis$M227)])
+analysis$z <- as.integer(analysis$M227 == "AB")
+unique(analysis[c("M227", "x", "z")])
+fit_ad <- lm(BW ~ sex + reps + x + z, data = analysis)
+round(coef(fit_ad), 4)
+a <- unname(coef(fit_ad)["x"])
+d <- unname(coef(fit_ad)["z"])
+# A three-level factor describes the same genotype contrasts.
+fit_factor <- lm(BW ~ sex + reps + M227, data = analysis)
+stopifnot(isTRUE(all.equal(unname(fitted(fit_ad)),
+                          unname(fitted(fit_factor)), tolerance = 1e-10)))
+```
+
+**Question 3.** Interpret $a$ and $d$. Are they the same as the raw genotype means?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+The fitted $a$ is `r round(a, 4)` and $d$ is `r round(d, 4)` in recorded body-weight units. They are genotype contrasts adjusted for sex and replicate. Raw means need not yield the same contrasts. Family dependence is not modelled here, so we use the fit descriptively rather than interpreting ordinary regression p-values as definitive genetic evidence.
+:::
+
+```{r}
+#| label: fig-genotype-effects
+#| fig-cap: "Fitted genotype contrasts relative to the homozygote midpoint, adjusted for sex and replicate."
+g <- c(AA = -a, AB = d, BB = a)
+plot(0:2, g, type = "b", pch = 16, xaxt = "n", col = "#247BA0",
+     xlab = "Genotype (B count)", ylab = "Fitted genotype contrast")
+axis(1, at = 0:2, labels = names(g))
+lines(c(0, 2), c(-a, a), lty = 2, col = "#B65C39")
+legend("topleft", c("Fitted contrasts", "Homozygote midpoint line"),
+       col = c("#247BA0", "#B65C39"), lty = c(1, 2), bty = "n")
+```
+
+## 4. Distinguish an allele-substitution effect
+
+The average effect of substituting B for A is the slope of genotypic value on B count in a specified population. Under HWE, with the coding above,
+
+$$\alpha=a+d(q-p).$$
+
+It depends on allele frequency when dominance is present. The coefficient $a$ of the additive contrast in the joint model is therefore not automatically $\alpha$. This distinction follows the [single-locus average-effect model](https://pmc.ncbi.nlm.nih.gov/articles/PMC5633389/).
+
+```{r}
+#| label: substitution-effect
+alpha_hwe <- a + d*(q-p)
+c(a = a, d = d, alpha_HWE_model = alpha_hwe)
+```
+
+**Question 4.** When is $\alpha=a$? What changes if we reverse the counted allele?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+They coincide when $d=0$ or $p=q=0.5$. Reversing the counted allele changes the signs of $a$ and $\alpha$, swaps $p$ and $q$, and leaves $d$ unchanged. The predicted genotype values and variance are unchanged. These labels do not mean B is inherently favorable.
+:::
+
+## 5. Calculate one-locus model variance
+
+Under HWE, the single-locus model gives
+
+$$V_A=2pq\alpha^2,\qquad V_D=(2pqd)^2,\qquad V_G=V_A+V_D.$$
+
+Here $V_A$ is variance of the linear allele-count prediction, and $V_D$ is the remaining dominance variance. These are model-based quantities for the supplied frequencies and fitted contrasts; they are not independently estimated genome-wide variance components. [Single-locus variance decomposition](https://doi.org/10.1534/genetics.113.155176)
+
+```{r}
+#| label: model-variance
+VA <- 2*p*q*alpha_hwe^2
+VD <- (2*p*q*d)^2
+mean_g <- sum(hwe*g)
+VG_direct <- sum(hwe*(g-mean_g)^2)
+stopifnot(isTRUE(all.equal(VG_direct, VA+VD, tolerance = 1e-10)))
+knitr::kable(data.frame(quantity = c("Additive", "Dominance", "Total genotype"),
+                       HWE_model_variance = c(VA, VD, VG_direct)), digits = 4)
+```
+
+### Compare the observed genotype distribution
+
+Our observed frequencies need not equal HWE proportions. We can compute the variance of the same fitted contrasts under the observed distribution directly:
+
+```{r}
+#| label: observed-variance
+mean_observed <- sum(observed*g)
+VG_observed <- sum(observed*(g-mean_observed)^2)
+c(HWE_model = VG_direct, observed_frequency_model = VG_observed,
+  sample_phenotype_variance = var(analysis$BW))
+```
+
+This is a frequency-weighted population variance with weights summing to one; it differs from the $n-1$ sample-variance convention. It is variance of fitted genotype contrasts, not the observed within-genotype phenotype variation.
+
+**Question 5.** Is $V_A/\operatorname{Var}(BW)$ total narrow-sense heritability?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. The numerator describes a single-marker HWE model using fitted effects, while the denominator describes sample phenotypes. Other loci, family/environmental effects, estimation uncertainty and population assumptions remain. An associated marker can tag variation through linkage disequilibrium rather than be causal. Estimating total heritability is the subject of the next practical.
+:::
+
+## Exercises
+
+1. Reverse A and B in the model. Check that the substitution effect changes sign but $V_A$ and $V_D$ do not.
+2. Hold the fitted $a,d$ fixed and vary B frequency. Plot $\alpha$ and $V_A$. Why can the same genotype effects yield different variances?
+3. Set $d=0$. Which formulas simplify? Does additive gene action imply equal allele frequencies?
+
+### Suggested solutions
+
+::: {.callout-note collapse="true" title="Open exercise solutions"}
+```{r}
+#| label: solutions
+alpha_reversed <- -a + d*(p-q)
+stopifnot(abs(alpha_reversed + alpha_hwe) < 1e-10,
+          abs(2*q*p*alpha_reversed^2 - VA) < 1e-10)
+p_grid <- seq(0, 1, length.out = 101)
+alpha_grid <- a + d*(1-2*p_grid)
+local({
+  old <- par(mfrow = c(1, 2))
+  on.exit(par(old))
+  plot(p_grid, alpha_grid, type = "l", xlab = "B frequency",
+       ylab = "HWE model substitution effect", col = "#247BA0")
+  plot(p_grid, 2*p_grid*(1-p_grid)*alpha_grid^2, type = "l",
+       xlab = "B frequency", ylab = "HWE model additive variance",
+       col = "#247BA0")
+})
+# Hand-solvable example: p=q=0.5, a=2, d=1.
+# Genotype values -2,1,2 have mean 0.5 and variance 2.25.
+toy_g <- c(-2, 1, 2)
+toy_f <- c(0.25, 0.5, 0.25)
+stopifnot(abs(sum(toy_f*(toy_g-0.5)^2) - 2.25) < 1e-12,
+          abs(2*0.5*0.5*2^2 + (2*0.5*0.5*1)^2 - 2.25) < 1e-12)
+```
+Allele reversal preserves the biological predictions. Frequency changes both the amount of segregating variation and, under dominance, the average substitution effect. With $d=0$, $\alpha=a$, $V_D=0$ and $V_A=2pqa^2$; this does not require $p=q$. At fixation genotype variance is zero. The substitution formula at fixation is interpreted as a limiting expression, not an estimable slope in a monomorphic population.
+:::
+
+## Connection to the next practical
+
+A marker model describes only one part of quantitative variation. Next we use family and pedigree information to estimate genetic parameters, distinguishing additive genetic variance, environmental sources and total phenotypic variance. Population summaries can connect to `gpop` as its APIs become available; known-truth biological simulations belong in `gsim`; fitting belongs in estimation tools.

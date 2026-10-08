@@ -31,6 +31,8 @@ After completing the course, students should be able to:
 
 - [Practical 1: Exploring quantitative traits in a mouse population](tutorials/mouse_quantitative_traits.qmd) — guided R analysis, figures, interpretation questions and solutions.
 
+- [Practical 2: From genotype effects to quantitative variation](tutorials/mouse_single_locus.qmd) — allele frequencies, genotype contrasts and single-locus variance.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).
