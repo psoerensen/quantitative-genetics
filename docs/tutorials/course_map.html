@@ -198,6 +198,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#foundations-of-genetic-variation" id="toc-foundations-of-genetic-variation" class="nav-link" data-scroll-target="#foundations-of-genetic-variation">Foundations of genetic variation</a></li>
   <li><a href="#genetic-evaluation-and-validation" id="toc-genetic-evaluation-and-validation" class="nav-link" data-scroll-target="#genetic-evaluation-and-validation">Genetic evaluation and validation</a></li>
   <li><a href="#population-change-and-evolutionary-selection" id="toc-population-change-and-evolutionary-selection" class="nav-link" data-scroll-target="#population-change-and-evolutionary-selection">Population change and evolutionary selection</a></li>
+  <li><a href="#conservation-management" id="toc-conservation-management" class="nav-link" data-scroll-target="#conservation-management">Conservation management</a></li>
   <li><a href="#breeding-programme-design" id="toc-breeding-programme-design" class="nav-link" data-scroll-target="#breeding-programme-design">Breeding-programme design</a></li>
   </ul></li>
   <li><a href="#running-the-r-examples" id="toc-running-the-r-examples" class="nav-link" data-scroll-target="#running-the-r-examples">Running the R examples</a></li>
@@ -258,7 +259,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="population-genetics-sequence" class="level2">
 <h2 class="anchored" data-anchor-id="population-genetics-sequence">Population-genetics sequence</h2>
-<p>These nine practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.</p>
+<p>These ten practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -315,6 +316,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 </tbody>
 </table>
+<div class="line-block"><a href="https://psoerensen.github.io/population-genetics/tutorials/conservation_genetics.html">PG 10: Conservation genetics and management choices</a> | How do contributions, pairings and a budget affect conservation choices? | PG 3–4 and PG 6; QG 9 is helpful |</div>
 <p>Keep <a href="https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html">population-genetics slides</a> alongside the practicals. In particular, HWE is a model expectation; identity by descent is defined on an ancestral base; and dosage alone does not identify phase.</p>
 </section>
 <section id="quantitative-genetics-sequence" class="level2">
@@ -426,26 +428,30 @@ ul.task-list li input[type="checkbox"] {
 <td>PG 4–7 and PG 9; finite realizations, equilibrium and mutation-model assumptions are explicit</td>
 </tr>
 <tr class="even">
+<td>Conservation genetics and management choices</td>
+<td>PG 10; parental contributions, kinship, marker expectations and constrained choices</td>
+</tr>
+<tr class="odd">
 <td>Quantitative variation, covariance and single-locus gene action</td>
 <td>QG 1–2; worked mouse analysis and hypothetical checks</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Genotype-by-environment interaction and broad-sense entry-mean heritability</td>
 <td>QG 12; replicated genotypes, balanced ANOVA and observation-unit distinctions</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Narrow-sense heritability and fitted genetic evaluation</td>
 <td>QG 3–5; an additive relationship model, BLUP and held-out phenotype prediction</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Selection response and programme design</td>
 <td>QG 6–9 and QG 11; objectives, contributions, fixed bases and resources</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Prediction validation</td>
 <td>QG 5 and QG 10; the latter uses a synthetic phenotype predictor, not a fitted breeding-value evaluation</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Association mapping, covariates and multiple testing</td>
 <td>QG 13; a small synthetic scan, tagged signals and explicit testing families</td>
 </tr>
@@ -453,7 +459,7 @@ ul.task-list li input[type="checkbox"] {
 </table>
 <section id="further-extensions" class="level3">
 <h3 class="anchored" data-anchor-id="further-extensions">Further extensions</h3>
-<p>For additional applications, the population-genetics slides discuss conservation, medicine, forensics and the molecular clock. PG 1–7 supply foundations for those topics, but do not provide dedicated applied practicals. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.</p>
+<p>PG 10 now provides a conservation-genetics application. The population-genetics slides also discuss medicine, forensics and the molecular clock; those topics still lack dedicated applied practicals. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.</p>
 <p>The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.</p>
 <p>PG 8 now supplies formal HWE inference. Teach it after PG 2–3 when the aim includes hypothesis testing, keeping observed departures separate from explanations of their cause.</p>
 <p>QG 13 now supplies a worked association scan. Its synthetic OLS model does not qualify a real GWAS in related animals; transfer to the mouse population requires an appropriate relatedness model.</p>
@@ -476,6 +482,11 @@ ul.task-list li input[type="checkbox"] {
 <p>Work through <strong>PG 1 → PG 2 → PG 3 → PG 4 → PG 5 → PG 6 → PG 7 → PG 9</strong>. Use <strong>QG 2</strong> as a bridge between gene action for a trait and genotype fitness.</p>
 <p>Checkpoint: separate deterministic expectations from finite-population realizations. Fitness dominance in PG 7 is a different model quantity from phenotypic dominance in QG 2; economic weights in QG 6 describe another decision layer.</p>
 </section>
+<section id="conservation-management" class="level3">
+<h3 class="anchored" data-anchor-id="conservation-management">Conservation management</h3>
+<p>Review <strong>PG 3–4 → PG 6 → PG 10</strong>, with <strong>QG 9</strong> for pedigree relationships. Compare immediate offspring inbreeding, parental group coancestry and marker heterozygosity before imposing a budget.</p>
+<p>Checkpoint: explain why equal contributions can produce different offspring inbreeding, and why a contributor concentration descriptor does not estimate effective population size.</p>
+</section>
 <section id="breeding-programme-design" class="level3">
 <h3 class="anchored" data-anchor-id="breeding-programme-design">Breeding-programme design</h3>
 <p>Review <strong>PG 3–4</strong> and <strong>PG 6</strong>, plus the evaluation concepts in <strong>QG 3–5</strong>. Then use <strong>QG 6 → QG 7 → QG 8 → QG 9 → QG 10 → QG 11</strong>. For a shorter design session, focus on QG 6, 7, 9 and 11, reading the simulation and validation assumptions before the capstone.</p>
@@ -497,7 +508,7 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td>PG 1–9</td>
+<td>PG 1–10</td>
 <td>Base R; hypothetical data; no required downloads</td>
 </tr>
 <tr class="even">

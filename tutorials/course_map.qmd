@@ -30,7 +30,7 @@ Arrows show useful conceptual connections, not compulsory software dependencies.
 
 ## Population-genetics sequence
 
-These nine practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.
+These ten practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.
 
 | Practical | Main question | Useful preparation |
 |---|---|---|
@@ -43,6 +43,8 @@ These nine practicals use base R and hypothetical inputs. They require no biolog
 | [PG 7: Selection, fitness and dominance](https://psoerensen.github.io/population-genetics/tutorials/selection_fitness.html) | How do genotype fitness and sampling change allele trajectories? | PG 2 and PG 6 |
 | [PG 8: Testing HWE proportions](https://psoerensen.github.io/population-genetics/tutorials/testing_hwe.html) | What do approximate and exact tests establish? | PG 2–3; sampling and hypothesis testing |
 | [PG 9: Mutation, selection and drift at balance](https://psoerensen.github.io/population-genetics/tutorials/mutation_balance.html) | How do equilibrium and stationary variation depend on the model? | PG 5–7; probability and simple recursions |
+
+| [PG 10: Conservation genetics and management choices](https://psoerensen.github.io/population-genetics/tutorials/conservation_genetics.html) | How do contributions, pairings and a budget affect conservation choices? | PG 3–4 and PG 6; QG 9 is helpful |
 
 Keep [population-genetics slides](https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html) alongside the practicals. In particular, HWE is a model expectation; identity by descent is defined on an ancestral base; and dosage alone does not identify phase.
 
@@ -77,6 +79,7 @@ The practicals cover the central flow, but some slide topics currently have expl
 | Genotype data, allele frequencies and HWE | PG 1–2 cover coding and expectations; PG 8 covers fitted chi-square and exact conditional tests |
 | Mating, population structure and identity by descent | PG 3; QG 7 and QG 9 connect parentage to breeding decisions |
 | Diversity, mutation, migration, LD, drift and selection | PG 4–7 and PG 9; finite realizations, equilibrium and mutation-model assumptions are explicit |
+| Conservation genetics and management choices | PG 10; parental contributions, kinship, marker expectations and constrained choices |
 | Quantitative variation, covariance and single-locus gene action | QG 1–2; worked mouse analysis and hypothetical checks |
 | Genotype-by-environment interaction and broad-sense entry-mean heritability | QG 12; replicated genotypes, balanced ANOVA and observation-unit distinctions |
 | Narrow-sense heritability and fitted genetic evaluation | QG 3–5; an additive relationship model, BLUP and held-out phenotype prediction |
@@ -86,7 +89,7 @@ The practicals cover the central flow, but some slide topics currently have expl
 
 ### Further extensions
 
-For additional applications, the population-genetics slides discuss conservation, medicine, forensics and the molecular clock. PG 1–7 supply foundations for those topics, but do not provide dedicated applied practicals. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.
+PG 10 now provides a conservation-genetics application. The population-genetics slides also discuss medicine, forensics and the molecular clock; those topics still lack dedicated applied practicals. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.
 
 The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.
 
@@ -114,6 +117,12 @@ Work through **PG 1 → PG 2 → PG 3 → PG 4 → PG 5 → PG 6 → PG 7 → PG
 
 Checkpoint: separate deterministic expectations from finite-population realizations. Fitness dominance in PG 7 is a different model quantity from phenotypic dominance in QG 2; economic weights in QG 6 describe another decision layer.
 
+### Conservation management
+
+Review **PG 3–4 → PG 6 → PG 10**, with **QG 9** for pedigree relationships. Compare immediate offspring inbreeding, parental group coancestry and marker heterozygosity before imposing a budget.
+
+Checkpoint: explain why equal contributions can produce different offspring inbreeding, and why a contributor concentration descriptor does not estimate effective population size.
+
 ### Breeding-programme design
 
 Review **PG 3–4** and **PG 6**, plus the evaluation concepts in **QG 3–5**. Then use **QG 6 → QG 7 → QG 8 → QG 9 → QG 10 → QG 11**. For a shorter design session, focus on QG 6, 7, 9 and 11, reading the simulation and validation assumptions before the capstone.
@@ -124,7 +133,7 @@ Checkpoint: define the objective, candidate eligibility, information schedule, p
 
 | Materials | Requirements and inputs |
 |---|---|
-| PG 1–9 | Base R; hypothetical data; no required downloads |
+| PG 1–10 | Base R; hypothetical data; no required downloads |
 | QG 1–2 | Base R calculations; pinned public mouse data downloads |
 | QG 3–5 | `qgg`; pinned public mouse data; the shared helper script |
 | QG 6 | Base R; supplied hypothetical objective and covariance inputs |
