@@ -26,6 +26,8 @@ After completing the course, students should be able to:
 
 ## Course Materials
 
+Start with the [course map](tutorials/course_map.qmd) for prerequisites, R requirements and routes through the population-genetics and quantitative-genetics practicals.
+
 - [Quantitative Genetics slides](slides/introduction_quantitative_genetics.html)
 - [Narrated Quantitative Genetics slides](slides/introduction_quantitative_genetics_narrated.html)
 

@@ -1,5 +1,7 @@
 # Tutorials
 
+See the [course map](course_map.qmd) for prerequisites and routes through both course sequences.
+
 - [Exploring quantitative traits in a mouse population](mouse_quantitative_traits.qmd): Practical 1, using base R and a pinned public dataset.
 - [From genotype effects to quantitative variation](mouse_single_locus.qmd): Practical 2, with corrected dominance coding and explicit HWE model assumptions.
 

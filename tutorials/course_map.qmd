@@ -1,0 +1,135 @@
+---
+title: "Course map"
+subtitle: "Population genetics, quantitative genetics and breeding decisions"
+format:
+  html:
+    toc: true
+editor: source
+---
+
+## Choose an entry point
+
+The practicals connect three questions: how genetic variation is described, how genetic merit is predicted, and how breeding decisions change a population. **PG** denotes a population-genetics practical and **QG** a quantitative-genetics practical; each course has its own numbering.
+
+Start with basic genetics, means and variances, and elementary R vectors, data frames and plots. Matrix notation becomes useful for genetic evaluation and selection indices. Each practical includes explanation, runnable examples, interpretation questions and suggested solutions.
+
+```{mermaid}
+flowchart TD
+  A["Genotype data, frequencies and mating: PG 1–3"] --> B["Diversity and population change: PG 4–7"]
+  A --> C["Quantitative traits and gene action: QG 1–2"]
+  C --> D["Parameters and genetic evaluation: QG 3–5"]
+  D --> E["Objectives and selection policies: QG 6–7"]
+  E --> F["Inheritance and inbreeding: QG 8–9"]
+  D --> G["Validation: QG 10"]
+  F --> H["Programme comparison: QG 11"]
+  G --> H
+  B --> H
+```
+
+Arrows show useful conceptual connections, not compulsory software dependencies. You can teach the short routes below without running every preceding analysis.
+
+## Population-genetics sequence
+
+These seven practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.
+
+| Practical | Main question | Useful preparation |
+|---|---|---|
+| [PG 1: Understanding genotype data](https://psoerensen.github.io/population-genetics/tutorials/genotype_data.html) | What does an allele dosage encode, and what does it omit? | Genotypes, alleles and basic R |
+| [PG 2: Allele frequencies and HWE](https://psoerensen.github.io/population-genetics/tutorials/allele_frequencies_hwe.html) | How do observed counts differ from random-union expectations? | PG 1 |
+| [PG 3: Structure, mating and inbreeding](https://psoerensen.github.io/population-genetics/tutorials/structure_mating_inbreeding.html) | Can a heterozygosity deficit identify its cause? | PG 2; conditional probability |
+| [PG 4: Measuring genetic diversity](https://psoerensen.github.io/population-genetics/tutorials/genetic_diversity.html) | Which diversity measure matches the data and sampling model? | PG 1–3 |
+| [PG 5: Mutation, migration and LD](https://psoerensen.github.io/population-genetics/tutorials/mutation_migration_ld.html) | How do processes change allele and haplotype frequencies? | PG 2; phased haplotypes from PG 1 |
+| [PG 6: Genetic drift](https://psoerensen.github.io/population-genetics/tutorials/genetic_drift.html) | Why do finite populations depart from deterministic expectations? | PG 2 and PG 4; binomial sampling |
+| [PG 7: Selection, fitness and dominance](https://psoerensen.github.io/population-genetics/tutorials/selection_fitness.html) | How do genotype fitness and sampling change allele trajectories? | PG 2 and PG 6 |
+
+Keep [population-genetics slides](https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html) alongside the practicals. In particular, HWE is a model expectation; identity by descent is defined on an ancestral base; and dosage alone does not identify phase.
+
+## Quantitative-genetics sequence
+
+Practicals 1–5 follow the mouse analysis from observed traits to genetic evaluation. Later practicals use explicitly hypothetical examples to separate objectives, information, selection, inheritance and programme assessment.
+
+| Practical | Main question | Useful preparation |
+|---|---|---|
+| [QG 1: Quantitative traits](mouse_quantitative_traits.qmd) | What variation is visible in the mouse records? | Means, variance and basic R |
+| [QG 2: Single-locus variation](mouse_single_locus.qmd) | How do additive and dominance effects contribute to variation? | QG 1; PG 1–2 |
+| [QG 3: Genetic parameters](mouse_genetic_parameters.qmd) | How do pedigree relationships support variance estimation? | QG 1–2; linear models and matrix notation |
+| [QG 4: Pedigree breeding values](mouse_pedigree_breeding_values.qmd) | How do BLUP, shrinkage and reliability relate? | QG 3 |
+| [QG 5: Genomic breeding values](mouse_genomic_breeding_values.qmd) | How do genomic information and held-out prediction enter evaluation? | QG 3–4; PG 1 |
+| [QG 6: Objectives and selection indices](breeding_objectives_indices.qmd) | What is valued, and how should information be weighted? | Covariance and linear models; QG 3–5 are helpful |
+| [QG 7: Selection policies and mating plans](selection_mating_plans.qmd) | How do rules and reproductive contributions turn scores into a plan? | QG 6 |
+| [QG 8: Simulating selection response](simulating_selection_response.qmd) | How do inheritance and a fixed reporting base reveal realized gain? | QG 7; PG 1 and PG 4 |
+| [QG 9: Relationships, mating and inbreeding](relationships_mating_inbreeding.qmd) | How can equal contributions produce different offspring inbreeding? | Relationship recursion from QG 3; PG 3; QG 7–8 |
+| [QG 10: Validating predictions and decisions](validating_selection_predictions.qmd) | What do family splits, calibration and shortlist outcomes establish? | Regression; QG 5; genetic/environmental distinction |
+| [QG 11: Comparing breeding programmes](comparing_breeding_programmes.qmd) | How do recording policies affect gain, diversity and resource use? | QG 6–10; PG 4 and PG 6 |
+
+Use the [quantitative-genetics slides](../slides/introduction_quantitative_genetics.qmd) to connect trait variation, gene action, covariance, heritability and response to selection. Reading a predecessor can provide conceptual preparation without running its full code.
+
+## Suggested teaching routes
+
+### Foundations of genetic variation
+
+Read **PG 1 → PG 2 → PG 3 → PG 4**, then **QG 1 → QG 2**. Students move from allele coding and random-union expectations to sources of trait variation.
+
+Checkpoint: explain why a heterozygosity deficit does not identify pedigree inbreeding, and why a locus's dominance effect and average allele-substitution effect are different quantities.
+
+### Genetic evaluation and validation
+
+Review **PG 1–2**, then work through **QG 1 → QG 2 → QG 3 → QG 4 → QG 5 → QG 10**. This route follows the mouse analysis and ends by examining what a validation split actually tests.
+
+Checkpoint: distinguish predicted breeding values, phenotype predictions, model-based reliability and empirical validation. State which information is available at the prediction date and whether validation animals have relatives in training.
+
+### Population change and evolutionary selection
+
+Work through **PG 1 → PG 2 → PG 3 → PG 4 → PG 5 → PG 6 → PG 7**. Use **QG 2** as a bridge between gene action for a trait and genotype fitness.
+
+Checkpoint: separate deterministic expectations from finite-population realizations. Fitness dominance in PG 7 is a different model quantity from phenotypic dominance in QG 2; economic weights in QG 6 describe another decision layer.
+
+### Breeding-programme design
+
+Review **PG 3–4** and **PG 6**, plus the evaluation concepts in **QG 3–5**. Then use **QG 6 → QG 7 → QG 8 → QG 9 → QG 10 → QG 11**. For a shorter design session, focus on QG 6, 7, 9 and 11, reading the simulation and validation assumptions before the capstone.
+
+Checkpoint: define the objective, candidate eligibility, information schedule, parent contributions, mating, genetic base, calendar horizon and budget before comparing outcomes. Higher score correlation alone does not select a programme.
+
+## Running the R examples
+
+| Materials | Requirements and inputs |
+|---|---|
+| PG 1–7 | Base R; hypothetical data; no required downloads |
+| QG 1–2 | Base R calculations; pinned public mouse data downloads |
+| QG 3–5 | `qgg`; pinned public mouse data; the shared helper script |
+| QG 6 | Base R; supplied hypothetical objective and covariance inputs |
+| QG 7–8 | `gsim`; hypothetical candidates and synthetic phased input |
+| QG 9 | Base R and the shared relationship helper; hypothetical pedigree; no downloads |
+| QG 10 | Base R; synthetic records and separate genetic truth |
+| QG 11 | `gsim` and the relationship helper; small synthetic paired runs; no downloads |
+
+For QG 3–5, 9 and 11, retain the `tutorials/` and `scripts/` directory arrangement. The [helper script](../scripts/mouse_practical_helpers.R) supplies separate functions; loading it does not download data or fit a model until those functions are called. QG 9 and 11 use only its relationship recursion and do not require `qgg`.
+
+Install `qgg` and `gsim` before the relevant session using the instructions in the practicals. The installed `gsim` must expose the breeding building blocks used in QG 7, 8 and 11. Data downloads in the mouse route need internet access. The website's explanations and outputs can be read without installing R.
+
+## Package connections
+
+| Owner | Role in the material |
+|---|---|
+| `gpop` | Population statistics, expectations and estimator assumptions; current practical links use teaching reference calculations |
+| `gsel` | Objectives, selection policies and programme design; the practicals do not assume an exported scientific policy optimizer |
+| `gsim` | Existing biological simulation, records, selection mechanics, parentage and persistent genetic values |
+| Estimation tools, including `qgg` in the mouse route | Variance estimation and fitted genetic evaluations |
+
+Course materials own the explanations and exercises. Package connections do not imply that every teaching calculation is an exported package function. Predictions, simulated truth and observed records remain distinct throughout the routes.
+
+## Instructor preparation and assessment
+
+Before a session, choose the route and check its package and input requirements. Run the selected examples, then ask students to explain the assumptions before interpreting their numerical outputs. Use the collapsible solutions after discussion.
+
+A short assessment can ask students to:
+
+1. Identify the counted allele, phenotype units, missing-data rule and population denominator.
+2. Explain the model behind a frequency expectation, covariance or relationship matrix.
+3. State the evaluation target and training information, including family connections.
+4. Describe how parental contributions and pairings affect offspring expectations.
+5. Report gain and diversity on fixed references while keeping costs and time explicit.
+
+For the capstone, assess the programme specification and interpretation alongside the code. Three synthetic runs illustrate paired comparisons; they do not establish a dependable real-world policy ranking. A broader experiment needs an agreed population, model, replication design and scope.
+
+Return to the [course homepage](../index.qmd) or the [teaching-materials hub](https://psoerensen.github.io/qgteach/).
