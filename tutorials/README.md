@@ -17,6 +17,8 @@
 
 - [Validating predictions and selection decisions](validating_selection_predictions.qmd): Practical 10, using base R and known synthetic truth to distinguish validation targets.
 
+- [Comparing breeding programmes](comparing_breeding_programmes.qmd): Practical 11, a small paired gsim comparison of recording policies with fixed bases and explicit resources.
+
 Practicals 3–5 require qgg and the shared script in scripts/mouse_practical_helpers.R.
 
 Render an individual page from the repository root, for example:

@@ -47,6 +47,8 @@ After completing the course, students should be able to:
 
 - [Practical 10: Validating predictions and selection decisions](tutorials/validating_selection_predictions.qmd) — family splits, training-only fitting, calibration and shortlist outcomes.
 
+- [Practical 11: Comparing breeding programmes](tutorials/comparing_breeding_programmes.qmd) — a capstone on recording policies, paired outcomes, gain, diversity and costs.
+
 ## Course Hub
 
 Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).

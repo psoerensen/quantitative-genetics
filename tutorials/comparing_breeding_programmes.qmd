@@ -1,0 +1,285 @@
+---
+title: "Comparing breeding programmes"
+subtitle: "Quantitative Genetics Practical 11: A capstone on gain, diversity and resources"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  error: false
+---
+
+## Learning objectives
+
+Specify a complete programme comparison; separate observable selection information from genetic truth; evaluate gain, pedigree inbreeding and marker diversity on fixed bases; count resource use; and summarize paired outcomes while retaining the limits of a small simulation.
+
+This capstone connects [objectives](breeding_objectives_indices.qmd), [selection and mating](selection_mating_plans.qmd), [inheritance](simulating_selection_response.qmd), [inbreeding](relationships_mating_inbreeding.qmd) and [validation](validating_selection_predictions.qmd). It requires `gsim` and the existing [relationship helper](../scripts/mouse_practical_helpers.R). See Practical 7 for package installation. All inputs are hypothetical, with no biological downloads, prediction fitting or new package APIs.
+
+## 1. Declare the question and hold other decisions fixed
+
+Does collecting a second independent phenotype record per candidate change genetic gain enough to justify its extra recording cost under this teaching model?
+
+The objective is increased additive merit for one trait, with weight one. Scores are averages of observed phenotypes, not fitted breeding values. Compare these programmes:
+
+| Decision | One record | Two records |
+|---|---|---|
+| Candidates per cohort | 24: 12 per role | Same |
+| Observations per candidate | 1 | 2 |
+| Selected parents | 3 sires and 3 dams | Same |
+| Selection score | Observed phenotype | Mean of two phenotypes |
+| Mating | Uniform independent parental draws | Same |
+| New offspring | 24 per generation | Same |
+| Horizon | 2 generations, assumed 2 years | Same |
+
+The second observation has an independent residual in this model. Both observations are available before selection; neither extends the assumed generation interval. There are no fixed effects, permanent environment, dominance, mutation or migration. These assumptions make the effect of repeated measurement transparent. They do not describe every real recording programme.
+
+## 2. Create one synthetic founder population
+
+Use 24 unrelated, noninbred pedigree founders and six phased markers on one chromosome. Independent Bernoulli draws supply founder alleles; this is a toy panel, not a reconstruction of historical haplotypes. G is VCF ALT and the counted allele. Cumulative map positions are in cM; offspring meiosis uses the existing `gsim` Poisson no-interference model.
+
+```{r}
+#| label: capstone-founders
+library(gsim)
+source("../scripts/mouse_practical_helpers.R")
+work <- tempfile("programme-capstone-"); dir.create(work)
+ids <- sprintf("base%02d",1:24)
+markers <- paste0("m",1:6)
+set.seed(20261011)
+h1 <- matrix(rbinom(24*6,1,.5),24,6,dimnames=list(ids,markers))
+h2 <- matrix(rbinom(24*6,1,.5),24,6,dimnames=list(ids,markers))
+vcf <- file.path(work,"founders.vcf")
+header <- paste(c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER",
+                  "INFO","FORMAT",ids),collapse="\t")
+body <- vapply(seq_along(markers),function(j)
+  paste(c("1",10*j,markers[j],"A","G",".",".",".","GT",
+          paste(h1[,j],h2[,j],sep="|")),collapse="\t"),character(1))
+writeLines(c("##fileformat=VCFv4.2",header,body),vcf)
+map <- data.frame(chromosome="1",variant_id=markers,
+                  genetic_position_cm=seq(0,100,length.out=6))
+reference <- gsim_import_vcf(vcf,map,file.path(work,"reference"))
+parent_table <- data.frame(animal=ids,sire=NA_character_,dam=NA_character_,
+                          sex=rep(c("M","F"),12),generation=1L)
+pedigree0 <- gsim_pedigree_from_table(parent_table)
+phase0 <- gsim_simulate_pedigree(reference,pedigree0,101,
+                               file.path(work,"base-phase"),"hap")
+bed0 <- gsim_simulate_pedigree(reference,pedigree0,101,
+                             file.path(work,"base-dosage"),"bed")
+effects <- matrix(c(.2,-.1,.15,0,.05,.1),6,1,
+                  dimnames=list(markers,"trait"))
+state <- gsim_trait_state(effects,center=1)
+dosage_effects <- diag(6); dimnames(dosage_effects) <- list(markers,markers)
+dosage_state <- gsim_trait_state(dosage_effects,center=0)
+g0 <- gsim_genetic_values(bed0,state)
+base_mean <- mean(g0)
+stopifnot(max(abs(g0-drop((h1+h2-1) %*% effects)))<1e-12)
+```
+
+Marker effects and dosage centers stay fixed for all programmes and runs. The founder mean is the genetic-gain reference. Pedigree inbreeding is relative to the declared unrelated-founder base. Do not re-center a selected cohort when reporting gain.
+
+## 3. Define records, time and accounting assumptions
+
+A record is $y_{iv}=g_i+e_{iv}$, with independent residual variance 0.04 trait units squared. For $v$ independent records, the mean has residual variance $0.04/v$. Averaging does not eliminate an environmental effect shared across visits; our example deliberately omits that component.
+
+Costs are hypothetical accounting units: 5 per record, 20 per selected parent per generation, and 10 per offspring. They are resource charges, not trait economic weights or estimated farm profit. Each generation lasts one assumed year, including the recording stage.
+
+```{r}
+#| label: programme-accounting
+policies <- data.frame(policy=c("One record","Two records"),visits=c(1L,2L))
+charges <- c(record=5,parent=20,offspring=10)
+years_per_generation <- 1
+generations <- 2L
+replicates <- 3L
+policies$residual_variance_of_mean <- .04/policies$visits
+policies$cost_per_generation <- 24*policies$visits*charges["record"]+
+  6*charges["parent"]+24*charges["offspring"]
+stopifnot(identical(policies$cost_per_generation,c(480,600)))
+knitr::kable(policies,digits=3,row.names=FALSE)
+```
+
+The founder cohorts are already available. Accounting starts with their selection-stage records and includes two offspring cohorts. The terminal offspring cohort is evaluated through simulation truth and genotypes; it is not phenotyped for another selection cycle, so we charge no terminal recording stage.
+
+## 4. Run a small paired comparison
+
+Three runs share this same founder panel. For each run, the two policies share numbered record, mating and meiosis seed schedules. Visit 1 has the same record and observation-unit identity under both policies, so it retains its innovation when visit 2 is added. Between runs, seeds differ. Later candidate genotypes can differ across policies because selection changes parentage.
+
+This pairing supports a difference within each run. It does not make the three runs independent founder-population experiments, nor remove all stochastic variability from their differences.
+
+```{r}
+#| label: programme-runner
+run_programme <- function(visits,replicate) {
+  policy <- policies$policy[match(visits,policies$visits)]
+  current <- phase0; bed <- bed0; pedigree <- pedigree0
+  animals <- ids; sex <- parent_table$sex
+  history <- list(); record_count <- 0L
+  for(t in seq_len(generations)) {
+    seed_base <- 10000*replicate+100*t
+    g <- gsim_genetic_values(bed,state)
+    record_table <- expand.grid(animal=animals,visit=seq_len(visits),
+                                stringsAsFactors=FALSE)
+    record_table$trait <- "trait"
+    record_table$record <- paste(record_table$animal,record_table$visit,sep=":")
+    record_table$observation_unit <- record_table$record
+    records <- gsim_records(g,records=record_table,
+                           residual_covariance=.04,seed=seed_base+1)
+    # Observable records alone supply the decision score.
+    scores <- tapply(records$records$value,records$records$animal,mean)
+    selection <- gsim_select(animals,c(M=3,F=3),scores=scores,
+                             method="score",strata=sex)
+    sires <- selection$animal[selection$selected & selection$stratum=="M"]
+    dams <- selection$animal[selection$selected & selection$stratum=="F"]
+    children <- sprintf("g%d-%02d",t,1:24)
+    mating <- gsim_mate(pedigree,sires,dams,children,seed=seed_base+2,
+      sex=setNames(rep(c("M","F"),12),children))
+    next_cohort <- gsim_simulate_cohort(current,mating,seed=seed_base+3,
+      output=file.path(work,paste0("visits",visits,"-run",replicate,"-g",t)))
+    plan <- mating$offspring
+    offspring_g <- gsim_genetic_values(next_cohort,state)
+    d <- gsim_genetic_values(next_cohort,dosage_state)
+    p <- colMeans(d)/2
+    full <- mating$pedigree$pedigree
+    tab <- data.frame(id=full$animal,sire=full$sire,dam=full$dam)
+    tab <- tab[match(mating$pedigree$canonical_order,tab$id),]
+    A <- mouse_relationship(tab)
+    offspring_F <- diag(A)[children]-1
+    F_from_parents <- A[cbind(match(plan$sire,rownames(A)),
+                             match(plan$dam,colnames(A)))]/2
+    stopifnot(max(abs(offspring_F-F_from_parents))<1e-12,
+      identical(attr(offspring_g,"trait_state_checksum"),state$checksum),
+      abs(mean(offspring_g)-sum((2*p-1)*effects[,"trait"]))<1e-12)
+    parent_expectation <- mean((g[plan$sire,"trait"]+g[plan$dam,"trait"])/2)
+    record_count <- record_count+nrow(records$records)
+    cost <- record_count*charges["record"]+t*6*charges["parent"]+
+      t*24*charges["offspring"]
+    history[[t]] <- data.frame(policy=policy,replicate=replicate,generation=t,
+      years=t*years_per_generation,gain=mean(offspring_g)-base_mean,
+      mean_F=mean(offspring_F),mean_HE=mean(2*p*(1-p)),
+      records=record_count,cost=unname(cost),
+      parents_used=length(mating$parents_used),
+      mendelian_mean=mean(offspring_g)-parent_expectation)
+    pedigree <- mating$pedigree; current <- next_cohort; bed <- next_cohort
+    animals <- children; sex <- plan$sex
+  }
+  do.call(rbind,history)
+}
+history <- do.call(rbind,lapply(seq_len(replicates),function(r)
+  do.call(rbind,lapply(policies$visits,function(v) run_programme(v,r)))))
+stopifnot(nrow(history)==12,all(history$mean_F>=0 & history$mean_F<=1),
+          all(history$mean_HE>=0 & history$mean_HE<=.5),
+          all(history$parents_used<=6))
+knitr::kable(history,digits=4,row.names=FALSE)
+```
+
+Selected-parent counts are fixed, but random mating can leave some selected parents unused. Offspring inbreeding depends on actual pairings and previous ancestry. Marker $H_E$ is the mean $2p(1-p)$ over the fixed six-marker panel, including invariant markers. It is not an estimate of genome-wide diversity or effective population size.
+
+The Mendelian-mean column separates realized offspring mean from the true parentage-weighted additive expectation. Truth evaluates the decision after selection; it did not choose parents. These small dense pedigree and dosage summaries are for teaching, not a large-population workflow.
+
+## 5. Evaluate terminal outcomes and paired differences
+
+Compare both programmes at the same two-year horizon. Divide gain from the original base by elapsed years to report a realized average gain rate over this horizon. This is not a stationary long-term response rate.
+
+```{r}
+#| label: terminal-outcomes
+terminal <- history[history$generation==generations,]
+terminal$gain_per_year <- terminal$gain/terminal$years
+one <- terminal[terminal$policy=="One record",]
+two <- terminal[terminal$policy=="Two records",]
+one <- one[order(one$replicate),]; two <- two[order(two$replicate),]
+stopifnot(identical(one$replicate,two$replicate),
+          all(one$records==48),all(two$records==96),
+          all(one$cost==960),all(two$cost==1200))
+paired <- data.frame(replicate=one$replicate,
+  gain_difference=two$gain-one$gain,
+  F_difference=two$mean_F-one$mean_F,
+  HE_difference=two$mean_HE-one$mean_HE,
+  extra_cost=two$cost-one$cost)
+knitr::kable(terminal,digits=4,row.names=FALSE)
+knitr::kable(paired,digits=4,row.names=FALSE)
+```
+
+The differences use the same run as a pair. Positive gain difference favors two records for terminal merit in that run; negative $F$ difference favors it for pedigree inbreeding. More records cost 240 extra accounting units over the horizon in every run. No single scalar defines a winner unless the programme supplies a resource constraint or values these outcomes on a justified common scale.
+
+```{r}
+#| label: paired-summary
+summary <- data.frame(outcome=c("Gain","Mean pedigree F","Mean marker HE"),
+  mean_difference=vapply(paired[2:4],mean,numeric(1)),
+  paired_SD=vapply(paired[2:4],sd,numeric(1)))
+summary$Monte_Carlo_SE <- summary$paired_SD/sqrt(replicates)
+knitr::kable(summary,digits=4,row.names=FALSE)
+```
+
+The Monte Carlo standard error illustrates uncertainty of an average over independent seeded simulation runs conditional on this founder panel and model. Three runs are far too few for a dependable policy-performance assessment. It excludes uncertainty about founder populations, trait architecture, residual variance, costs and real deployment. Do not interpret it as a real-world confidence interval.
+
+```{r}
+#| label: fig-capstone
+#| fig-cap: "Paired terminal outcomes from three teaching runs. Lines join the same run under one and two records; all runs share one synthetic founder panel."
+#| fig-width: 10
+#| fig-height: 5
+local({
+  old <- par(mfrow=c(1,2)); on.exit(par(old))
+  for(metric in c("gain","mean_F")) {
+    values <- c(one[[metric]],two[[metric]])
+    limits <- range(values)
+    if(diff(limits)==0) limits <- limits+c(-.01,.01)
+    plot(c(1,2),limits,type="n",xaxt="n",xlab="Records per candidate",
+         ylab=if(metric=="gain") "Terminal genetic gain" else "Mean pedigree F")
+    axis(1,at=1:2,labels=c("One","Two"))
+    for(r in seq_len(replicates))
+      lines(1:2,c(one[[metric]][r],two[[metric]][r]),type="b",pch=15+r,
+            col=c("#247BA0","#D8A47F","#86B7A3")[r])
+  }
+})
+```
+
+**Question 1.** Does reducing record noise guarantee more gain and less inbreeding in every run?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+No. Recording precision changes selection information; finite selection, mating and segregation still vary. More accurate selection does not automatically preserve diversity. With connected pedigrees, selecting more similar high-merit relatives can also affect future relationships. These outcomes need separate evaluation.
+:::
+
+## 6. Make the decision conditional on resources and assumptions
+
+For a hypothetical horizon budget of 1,000 accounting units, only the one-record programme is feasible under these charges. A budget of 1,200 makes both feasible. Feasibility and expected performance are different questions: an infeasible strategy is excluded by the budget, while an uncertain performance difference calls for more evidence within an agreed experimental design.
+
+The trait objective is additive merit. Recording cost is paid by the programme. To translate gain into economic benefit, specify trait units, production volume, marginal values, timing and discounting. Subtracting these accounting costs directly from a mean genetic value would mix units.
+
+## Exercises
+
+1. Verify the additional cost from record counts without using the accumulated cost column.
+2. Suppose the second record delays each generation from one to 1.5 years, without changing genotypes or scores in these already simulated runs. Recalculate elapsed years and the realized average gain rate for that scenario. Explain what this post-processing does not model.
+3. Suppose records have permanent-environment variance 0.03 and independent residual variance 0.04. Calculate environmental variance in the one- and two-record mean.
+
+::: {.callout-note collapse="true" title="Suggested solutions"}
+```{r}
+extra <- (two$records-one$records)*charges["record"]
+stopifnot(all(extra==240),all(extra==paired$extra_cost))
+delayed_years <- generations*1.5
+delayed_gain_rate <- two$gain/delayed_years
+knitr::kable(data.frame(replicate=two$replicate,
+  original_gain_per_year=two$gain_per_year,delayed_gain_per_year=delayed_gain_rate),
+  digits=4,row.names=FALSE)
+noise_of_mean <- .03+.04/c(1,2)
+stopifnot(max(abs(noise_of_mean-c(.07,.05)))<1e-12)
+```
+The delay calculation changes only the calendar-time denominator. It does not simulate age effects, changed survival, extra maintenance cost or additional cycles in a fixed calendar horizon. Permanent environment persists across visits, so only the independent residual part is divided by the number of records.
+:::
+
+## Capstone assignment
+
+Write a short programme specification before extending the simulation:
+
+1. State the trait objective, units, genetic base and deployment population.
+2. Define records available at selection, any fitted evaluation and its validation target.
+3. Declare eligibility, parent quotas, contribution limits and mating rules.
+4. Specify horizon, generation intervals, resource charges and feasible budgets.
+5. Choose gain, diversity and inbreeding outcomes and a planned paired replication design.
+
+Then explain which conclusion your results support and which assumptions remain untested. Do not use simulated truth as a decision score unless deliberately labelling an oracle comparison.
+
+## Package connection and next topic
+
+`gsel` owns objectives and programme policies; `gsim` supplies existing [records, selection, mating and inheritance](https://github.com/psoerensen/gsim/blob/main/docs/design/breeding_building_blocks.md); `gpop` owns population-statistic definitions and their assumptions. Estimation tools fit genetic evaluations. This capstone composes those responsibilities without adding package interfaces.
+
+The next teaching step is a course map connecting the population-genetics and quantitative-genetics practicals, with prerequisites and entry points for students and instructors.

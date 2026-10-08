@@ -234,4 +234,4 @@ Freeze training records at the intended selection date and evaluate a later coho
 
 Estimation tools own fitted genetic evaluations. `gsim` can provide observable records and separate known genetic truth for simulation experiments. `gsel` consumes predictions for programme decisions; `gpop` supplies population summaries. This lesson adds no package prediction or validation API.
 
-Next bring these pieces together in a breeding-programme comparison: declare the objective, information schedule, selection and mating rules, then evaluate gain, diversity and resources on a fixed base. A comparison needs replicated outcomes before drawing conclusions about expected policy performance.
+Continue with [Practical 11: Comparing breeding programmes](comparing_breeding_programmes.qmd): declare the objective, information schedule, selection and mating rules, then evaluate gain, diversity and resources on a fixed base. A comparison needs replicated outcomes before drawing conclusions about expected policy performance.
