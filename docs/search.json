@@ -1642,6 +1642,6 @@
     "href": "tutorials/association_mapping.html#package-connection-and-next-topic",
     "title": "Association mapping, covariates and multiple testing",
     "section": "Package connection and next topic",
-    "text": "Package connection and next topic\nAssociation estimation belongs to the existing estimation/association tools. gpop supplies population and LD summaries, gsim supplies biological known-truth simulation, and gsel consumes genetic evaluations for decisions. This base-R lesson adds no package APIs or large-genome workflow.\nReturn to the course map. A useful next population-genetics extension is mutation–selection and mutation–drift balance, joining the separate evolutionary forces already introduced."
+    "text": "Package connection and next topic\nAssociation estimation belongs to the existing estimation/association tools. gpop supplies population and LD summaries, gsim supplies biological known-truth simulation, and gsel consumes genetic evaluations for decisions. This base-R lesson adds no package APIs or large-genome workflow.\nReturn to the course map. For mutation–selection and mutation–drift balance, see PG Practical 9, which joins the evolutionary forces already introduced."
   }
 ]

@@ -234,4 +234,4 @@ The simple combined family has 990 marker/trait tests, assuming all are estimabl
 
 Association estimation belongs to the existing estimation/association tools. `gpop` supplies population and LD summaries, `gsim` supplies biological known-truth simulation, and `gsel` consumes genetic evaluations for decisions. This base-R lesson adds no package APIs or large-genome workflow.
 
-Return to the [course map](course_map.qmd). A useful next population-genetics extension is mutation–selection and mutation–drift balance, joining the separate evolutionary forces already introduced.
+Return to the [course map](course_map.qmd). For mutation–selection and mutation–drift balance, see [PG Practical 9](https://psoerensen.github.io/population-genetics/tutorials/mutation_balance.html), which joins the evolutionary forces already introduced.
