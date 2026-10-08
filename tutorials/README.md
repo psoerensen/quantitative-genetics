@@ -13,6 +13,8 @@
 
 - [Simulating selection response](simulating_selection_response.qmd): Practical 8, using gsim and a synthetic phased panel without downloads.
 
+- [Relationships, mating and inbreeding](relationships_mating_inbreeding.qmd): Practical 9, using base R and the existing relationship helper on a hypothetical pedigree.
+
 Practicals 3–5 require qgg and the shared script in scripts/mouse_practical_helpers.R.
 
 Render an individual page from the repository root, for example:
