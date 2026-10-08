@@ -64,8 +64,8 @@ website:
             href: tutorials/genotype_environment_heritability.html
           - text: "13. Association mapping and multiple testing"
             href: tutorials/association_mapping.html
-      - text: "qgteach"
-        href: https://psoerensen.github.io/qgteach/
+      - text: "gteach"
+        href: https://psoerensen.github.io/gteach/
 
 format:
   html:

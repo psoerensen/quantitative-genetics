@@ -222,4 +222,4 @@ A short assessment can ask students to:
 
 For the capstone, assess the programme specification and interpretation alongside the code. Three synthetic runs illustrate paired comparisons; they do not establish a dependable real-world policy ranking. A broader experiment needs an agreed population, model, replication design and scope.
 
-Return to the [course homepage](../index.qmd) or the [teaching-materials hub](https://psoerensen.github.io/qgteach/).
+Return to the [course homepage](../index.qmd) or the [teaching-materials hub](https://psoerensen.github.io/gteach/).

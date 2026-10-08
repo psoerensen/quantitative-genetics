@@ -4,7 +4,7 @@ Standalone Quarto- and R-based teaching materials for quantitative genetics.
 
 Published website: <https://psoerensen.github.io/quantitative-genetics/>
 
-Teaching-materials hub: <https://psoerensen.github.io/qgteach/>
+Teaching-materials hub: <https://psoerensen.github.io/gteach/>
 
 ## Repository Structure
 

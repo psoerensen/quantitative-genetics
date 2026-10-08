@@ -78,4 +78,4 @@ For independent study or exam preparation, follow a route in the [course map](tu
 
 ## Course Hub
 
-Return to the [qgteach teaching-materials hub](https://psoerensen.github.io/qgteach/).
+Return to the [gteach teaching-materials hub](https://psoerensen.github.io/gteach/).
