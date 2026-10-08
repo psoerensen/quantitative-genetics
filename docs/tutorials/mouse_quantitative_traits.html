@@ -4047,7 +4047,6 @@ window.Quarto = {
   <li><a href="#suggested-solutions" id="toc-suggested-solutions" class="nav-link" data-scroll-target="#suggested-solutions">Suggested solutions</a></li>
   </ul></li>
   <li><a href="#connection-to-the-next-practical" id="toc-connection-to-the-next-practical" class="nav-link" data-scroll-target="#connection-to-the-next-practical">Connection to the next practical</a></li>
-  <li><a href="#reproducibility-and-sources" id="toc-reproducibility-and-sources" class="nav-link" data-scroll-target="#reproducibility-and-sources">Reproducibility and sources</a></li>
   </ul>
 </nav>
     </div>
@@ -4083,7 +4082,7 @@ window.Quarto = {
 <section id="biological-question-and-data" class="level2">
 <h2 class="anchored" data-anchor-id="biological-question-and-data">Biological question and data</h2>
 <p>How do body weight and blood glucose vary among mice, and how do those patterns relate to family, sex and experimental replicate?</p>
-<p>This practical adapts the first section of the <a href="https://psoerensen.github.io/qgtutorials/Practicals_mouse_example.pdf">mouse practicals by Rohde, Sørensen and Sørensen (2022)</a>. Those practicals describe an F2 population derived from M16 and ICR lines, with traits measured at eight weeks. The historical population description reports 1,181 mice; the teaching file contains 1,177 records. The file alone does not explain the difference, so we use its observed record count throughout.</p>
+<p>The data describe an F2 population derived from M16 and ICR lines, with traits measured at eight weeks. The historical population description reports 1,181 mice; the teaching file contains 1,177 records. The file alone does not explain the difference, so we use its observed record count throughout.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -4638,40 +4637,6 @@ Open exercise solutions
 <section id="connection-to-the-next-practical" class="level2">
 <h2 class="anchored" data-anchor-id="connection-to-the-next-practical">Connection to the next practical</h2>
 <p>Next we connect allele frequencies and genotype effects to quantitative variation, then distinguish genetic variance from phenotypic variance. <code>gpop</code> can support population summaries as its scientific interfaces become available; <code>gsim</code> provides simulated biological data where truth is known; <code>gsel</code> concerns selection objectives and decisions. None is required for this first descriptive practical, and model fitting remains with estimation tools.</p>
-</section>
-<section id="reproducibility-and-sources" class="level2">
-<h2 class="anchored" data-anchor-id="reproducibility-and-sources">Reproducibility and sources</h2>
-<p>Data: <a href="https://github.com/psoerensen/bgcourse/blob/224a4024f558ff9c0a481468979178e33b81b27b/data/mouse.rds">bgcourse mouse.rds at the pinned revision</a>. Teaching sequence: <a href="https://psoerensen.github.io/qgtutorials/Practicals_mouse_example.pdf">2022 mouse practicals</a>, with related 2023 source in <code>qgapps</code>. Presentation reference: <a href="https://psoerensen.github.io/bayesian-linear-regression/">Bayesian Linear Regression materials</a>.</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show R code</summary>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>R version 4.4.1 (2024-06-14 ucrt)
-Platform: x86_64-w64-mingw32/x64
-Running under: Windows 11 x64 (build 26200)
-
-Matrix products: default
-
-
-locale:
-[1] C
-system code page: 65001
-
-time zone: Europe/Copenhagen
-tzcode source: internal
-
-attached base packages:
-[1] stats     graphics  grDevices utils     datasets  methods   base     
-
-loaded via a namespace (and not attached):
- [1] htmlwidgets_1.6.4 compiler_4.4.1    fastmap_1.2.0     cli_3.6.5        
- [5] tools_4.4.1       htmltools_0.5.8.1 yaml_2.3.10       rmarkdown_2.27   
- [9] knitr_1.48        jsonlite_2.0.0    xfun_0.49         digest_0.6.36    
-[13] rlang_1.1.7       evaluate_1.0.5   </code></pre>
-</div>
-</div>
 
 
 </section>

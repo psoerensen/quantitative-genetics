@@ -25,7 +25,7 @@ Read alongside the introductory slides on [quantitative variation](../slides/int
 
 How do body weight and blood glucose vary among mice, and how do those patterns relate to family, sex and experimental replicate?
 
-This practical adapts the first section of the [mouse practicals by Rohde, Sørensen and Sørensen (2022)](https://psoerensen.github.io/qgtutorials/Practicals_mouse_example.pdf). Those practicals describe an F2 population derived from M16 and ICR lines, with traits measured at eight weeks. The historical population description reports 1,181 mice; the teaching file contains 1,177 records. The file alone does not explain the difference, so we use its observed record count throughout.
+The data describe an F2 population derived from M16 and ICR lines, with traits measured at eight weeks. The historical population description reports 1,181 mice; the teaching file contains 1,177 records. The file alone does not explain the difference, so we use its observed record count throughout.
 
 | Variable | Meaning | R representation |
 | --- | --- | --- |
@@ -271,12 +271,3 @@ The mean and standard deviation multiply by 1,000; variance multiplies by 1,000,
 ## Connection to the next practical
 
 Next we connect allele frequencies and genotype effects to quantitative variation, then distinguish genetic variance from phenotypic variance. `gpop` can support population summaries as its scientific interfaces become available; `gsim` provides simulated biological data where truth is known; `gsel` concerns selection objectives and decisions. None is required for this first descriptive practical, and model fitting remains with estimation tools.
-
-## Reproducibility and sources
-
-Data: [bgcourse mouse.rds at the pinned revision](https://github.com/psoerensen/bgcourse/blob/224a4024f558ff9c0a481468979178e33b81b27b/data/mouse.rds). Teaching sequence: [2022 mouse practicals](https://psoerensen.github.io/qgtutorials/Practicals_mouse_example.pdf), with related 2023 source in `qgapps`. Presentation reference: [Bayesian Linear Regression materials](https://psoerensen.github.io/bayesian-linear-regression/).
-
-```{r}
-#| label: session-information
-sessionInfo()
-```
