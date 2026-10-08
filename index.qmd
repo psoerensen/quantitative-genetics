@@ -29,7 +29,7 @@ After completing the course, students should be able to:
 - [Quantitative Genetics slides](slides/introduction_quantitative_genetics.html)
 - [Narrated Quantitative Genetics slides](slides/introduction_quantitative_genetics_narrated.html)
 
-Additional teaching materials will be added to the standard course folders as they are developed.
+- [Practical 1: Exploring quantitative traits in a mouse population](tutorials/mouse_quantitative_traits.qmd) — guided R analysis, figures, interpretation questions and solutions.
 
 ## Course Hub
 

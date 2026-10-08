@@ -1,0 +1,282 @@
+---
+title: "Exploring quantitative traits in a mouse population"
+subtitle: "Practical 1: Variation, association and family structure"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-summary: "Show R code"
+    embed-resources: true
+editor: source
+execute:
+  echo: true
+  error: false
+---
+
+## Learning objectives
+
+After this practical you should be able to describe a quantitative trait using means, variances and distributions; distinguish phenotypic association from genetic correlation; explore sex, replicate and family patterns; and explain why these summaries do not estimate heritability.
+
+You need introductory statistics and basic R. All calculations use base R; no additional analysis packages are required. Work through the questions before opening the suggested answers.
+
+Read alongside the introductory slides on [quantitative variation](../slides/introduction_quantitative_genetics.qmd#measuring-quantitative-variation), [the mean](../slides/introduction_quantitative_genetics.qmd#the-mean), [variance](../slides/introduction_quantitative_genetics.qmd#the-variance) and [covariance and correlation](../slides/introduction_quantitative_genetics.qmd#covariance-and-correlation-in-quantitative-genetics).
+
+## Biological question and data
+
+How do body weight and blood glucose vary among mice, and how do those patterns relate to family, sex and experimental replicate?
+
+This practical adapts the first section of the [mouse practicals by Rohde, Sørensen and Sørensen (2022)](https://psoerensen.github.io/qgtutorials/Practicals_mouse_example.pdf). Those practicals describe an F2 population derived from M16 and ICR lines, with traits measured at eight weeks. The historical population description reports 1,181 mice; the teaching file contains 1,177 records. The file alone does not explain the difference, so we use its observed record count throughout.
+
+| Variable | Meaning | R representation |
+| --- | --- | --- |
+| `BW` | Body weight | Numeric |
+| `Gl` | Blood glucose measurement | Numeric |
+| `sire`, `dam` | Father and mother labels | Factors |
+| `sex` | Recorded sex | Factor |
+| `reps` | Experimental replicate | Factor |
+
+The RDS file does not include measurement-unit metadata. We therefore label axes in recorded units rather than infer units. Parent labels are identities, not numerical covariates. Row names are retained source labels; do not assume they provide a complete pedigree or a validated identifier mapping.
+
+### Load a reproducible data version
+
+Download the public teaching file once into R's temporary directory. The URL fixes a repository revision; the checksum checks that the bytes match the version used here. No raw data are changed or added to the course repository. Internet access is needed for the initial download.
+
+```{r}
+#| label: load-data
+revision <- "224a4024f558ff9c0a481468979178e33b81b27b"
+data_url <- paste0("https://raw.githubusercontent.com/psoerensen/bgcourse/",
+                   revision, "/data/mouse.rds")
+data_file <- file.path(tempdir(), "qg1-mouse.rds")
+if (!file.exists(data_file)) {
+  download.file(data_url, data_file, mode = "wb", quiet = TRUE)
+}
+stopifnot(unname(tools::md5sum(data_file)) ==
+            "115b9d800485bad86c253c8c6a7d770d")
+mouse <- readRDS(data_file)
+stopifnot(is.data.frame(mouse),
+          identical(names(mouse), c("sire", "dam", "sex", "reps", "Gl", "BW")),
+          is.numeric(mouse$BW), is.numeric(mouse$Gl))
+str(mouse)
+```
+
+## 1. Inspect records and missingness
+
+**Question 1.** How many records and variables are present? Are any values missing? Why should we check before calculating a mean?
+
+```{r}
+#| label: inspect-data
+c(records = nrow(mouse), variables = ncol(mouse))
+colSums(is.na(mouse))
+table(mouse$sex)
+table(mouse$reps)
+```
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+There are `r nrow(mouse)` records and `r ncol(mouse)` variables. This version has no missing values in these fields. Missing values in another dataset would require a declared exclusion or imputation policy and reported denominators. A missing phenotype is not a zero phenotype.
+:::
+
+## 2. Describe quantitative variation
+
+For observations $y_1,\ldots,y_n$, the sample mean is $\bar y=\sum_i y_i/n$ and the sample variance is
+
+$$s_y^2=\frac{1}{n-1}\sum_{i=1}^n(y_i-\bar y)^2.$$
+
+The standard deviation $s_y$ has the same units as the observations; variance has squared units. These describe the available phenotypes, combining genetic, environmental and other sources of variation.
+
+**Question 2.** Calculate the mean, variance and standard deviation of each trait. Can their raw variances be compared as measures of genetic variability?
+
+```{r}
+#| label: trait-summaries
+trait_summary <- t(vapply(mouse[c("BW", "Gl")], function(y) {
+  c(n = sum(!is.na(y)), mean = mean(y), variance = var(y),
+    sd = sd(y), minimum = min(y), maximum = max(y))
+}, numeric(6)))
+knitr::kable(trait_summary, digits = 3, caption = "Observed phenotype summaries")
+```
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Mean body weight is `r round(mean(mouse$BW), 3)` and mean glucose is `r round(mean(mouse$Gl), 3)` in their recorded units. Raw variances depend on measurement scale, and neither variance is an estimate of additive genetic variance.
+:::
+
+### Inspect the distributions
+
+```{r}
+#| label: fig-distributions
+#| fig-cap: "Distributions of body weight and glucose in the teaching sample."
+#| fig-width: 9
+#| fig-height: 6
+local({
+  old <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+  on.exit(par(old))
+  for (trait in c("BW", "Gl")) {
+    hist(mouse[[trait]], breaks = 20, col = "#4C92B0", border = "white",
+         main = trait, xlab = paste(trait, "(recorded units)"))
+  }
+  for (trait in c("BW", "Gl")) {
+    qqnorm(mouse[[trait]], main = paste("Normal Q-Q plot:", trait), pch = 16,
+           cex = 0.5, col = "#4C92B0")
+    qqline(mouse[[trait]], col = "#B65C39", lwd = 2)
+  }
+})
+```
+
+**Question 3.** Which trait has the more pronounced upper tail? Do the plots justify saying that all observations are normally distributed?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Inspect departures from the Q-Q reference line, particularly in the tails. Glucose has a relatively pronounced upper tail. A roughly bell-shaped histogram does not prove normality. These are marginal phenotype distributions; a later regression model makes assumptions about conditional residuals, and observations within families may be dependent.
+:::
+
+## 3. Explore the relationship between traits
+
+Sample covariance measures joint variation, while Pearson correlation rescales covariance:
+
+$$r_{BW,Gl}=\frac{s_{BW,Gl}}{s_{BW}s_{Gl}}.$$
+
+**Question 4.** Are heavier mice generally associated with higher glucose measurements? Does that association establish genetic correlation or causation?
+
+```{r}
+#| label: fig-association
+#| fig-cap: "Phenotypic association between body weight and glucose; the line is a descriptive linear fit."
+plot(Gl ~ BW, data = mouse, pch = 16, cex = 0.6,
+     col = adjustcolor("#247BA0", alpha.f = 0.4),
+     xlab = "Body weight (recorded units)",
+     ylab = "Glucose (recorded units)")
+abline(lm(Gl ~ BW, data = mouse), col = "#B65C39", lwd = 2)
+c(covariance = cov(mouse$BW, mouse$Gl),
+  correlation = cor(mouse$BW, mouse$Gl))
+```
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+The observed correlation is `r round(cor(mouse$BW, mouse$Gl), 3)`, a positive phenotypic association. Shared environment, sex, family and other factors can contribute. Estimating genetic correlation requires a model separating genetic covariance from other covariance. A conventional independent-observation correlation test would also need its sampling assumptions reviewed for this family-structured sample.
+:::
+
+## 4. Compare sex and replicate groups
+
+**Question 5.** Compare group sizes, means and within-group spread. Does a difference between groups establish its biological cause?
+
+```{r}
+#| label: group-summaries
+aggregate(mouse[c("BW", "Gl")], mouse[c("sex")], mean)
+aggregate(mouse[c("BW", "Gl")], mouse[c("reps")], mean)
+```
+
+```{r}
+#| label: fig-groups
+#| fig-cap: "Trait distributions by recorded sex and experimental replicate."
+#| fig-width: 9
+#| fig-height: 6
+local({
+  old <- par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+  on.exit(par(old))
+  for (group in c("sex", "reps")) {
+    for (trait in c("BW", "Gl")) {
+      boxplot(reformulate(group, response = trait), data = mouse,
+              col = "#86B7A3", main = paste(trait, "by", group),
+              ylab = paste(trait, "(recorded units)"))
+    }
+  }
+})
+```
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Describe the direction, size and overlap of the plotted differences. Groups may differ in composition as well as environment; these comparisons are descriptive and do not identify causal effects. A later model should consider sex, replicate and the sampling design together.
+:::
+
+## 5. Examine family structure
+
+Related mice share some inherited variation, but family membership may also capture shared environment. Paternal and maternal families are different groupings; a sire can have offspring from several dams.
+
+**Question 6.** How many sire and dam families are represented? Are their sizes balanced? Does a family pattern directly estimate heritability?
+
+```{r}
+#| label: family-sizes
+family_sizes <- list(sire = table(mouse$sire), dam = table(mouse$dam))
+t(vapply(family_sizes, function(n) {
+  c(families = length(n), minimum = min(n), maximum = max(n))
+}, numeric(3)))
+# How many sire labels occur within each dam's records?
+table(vapply(split(as.character(mouse$sire), mouse$dam),
+             function(x) length(unique(x)), integer(1)))
+```
+
+```{r}
+#| label: fig-families
+#| fig-cap: "Phenotype distributions within paternal families. Differences can reflect inherited and environmental sources."
+#| fig-width: 9
+#| fig-height: 5
+local({
+  old <- par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
+  on.exit(par(old))
+  for (trait in c("BW", "Gl")) {
+    boxplot(reformulate("sire", response = trait), data = mouse,
+            col = "#86B7A3", main = trait, xlab = "Sire label",
+            ylab = "Recorded units", las = 2)
+  }
+})
+```
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+There are `r length(family_sizes$sire)` sire families and `r length(family_sizes$dam)` dam families. Their sizes range from `r min(family_sizes$sire)` to `r max(family_sizes$sire)` and from `r min(family_sizes$dam)` to `r max(family_sizes$dam)`, respectively. Family contrasts alone do not separate additive genetic, maternal and shared environmental effects. Later practicals introduce pedigree relationships and variance-component models.
+:::
+
+## 6. Move from exploration to modelling
+
+An exploratory regression can compare sex and replicate patterns while keeping family modelling for a later practical. For body weight, write
+
+$$BW_i=\mu+\beta_{sex(i)}+\gamma_{rep(i)}+e_i.$$
+
+Here $\mu$ is a reference-group mean, the coefficients express group contrasts, and $e_i$ is the residual. This model does not include genetic effects or account for within-family dependence.
+
+```{r}
+#| label: exploratory-model
+fit <- lm(BW ~ sex + reps, data = mouse)
+round(coef(fit), 3)
+c(observed_variance = var(mouse$BW),
+  residual_variance = var(residuals(fit)))
+```
+
+**Question 7.** Why is the residual variance not automatically environmental variance? Why should we avoid interpreting regression significance as a heritability estimate?
+
+::: {.callout-note collapse="true" title="Suggested answer"}
+Residuals contain all variation not described by these predictors, including unmodelled genetic and environmental sources. Heritability requires a defined population, variance decomposition and appropriate relationship/sampling model. Coefficient p-values from this simple model would rely on error assumptions that do not address family dependence.
+:::
+
+## Exercises
+
+1. Multiply body weight by 1,000. Predict the changes in its mean, variance, standard deviation and correlation with glucose, then verify them in R.
+2. Calculate the body-weight/glucose correlation separately within each sex. Explain why these may differ from the pooled correlation.
+3. Plot body weight by dam. Compare readability and family sizes with the sire plot.
+4. Compare the unweighted mean of sire-family means with the overall mean. Explain the role of unequal family size.
+
+### Suggested solutions
+
+::: {.callout-note collapse="true" title="Open exercise solutions"}
+```{r}
+#| label: exercise-solutions
+scaled <- mouse$BW * 1000
+c(mean_ratio = mean(scaled) / mean(mouse$BW),
+  variance_ratio = var(scaled) / var(mouse$BW),
+  sd_ratio = sd(scaled) / sd(mouse$BW),
+  correlation = cor(scaled, mouse$Gl))
+vapply(split(mouse, mouse$sex), function(d) cor(d$BW, d$Gl), numeric(1))
+boxplot(BW ~ dam, data = mouse, las = 2, cex.axis = 0.5,
+        xlab = "Dam label", ylab = "Body weight (recorded units)")
+sire_means <- tapply(mouse$BW, mouse$sire, mean)
+c(overall = mean(mouse$BW), unweighted_family_mean = mean(sire_means),
+  weighted_family_mean = weighted.mean(sire_means, table(mouse$sire)))
+```
+The mean and standard deviation multiply by 1,000; variance multiplies by 1,000,000; correlation is unchanged. Within-sex correlations describe different subsets and exclude between-sex mean differences. More dam families make their plot denser. Weighting family means by family size recovers the overall mean; equal weighting answers a different question.
+:::
+
+## Connection to the next practical
+
+Next we connect allele frequencies and genotype effects to quantitative variation, then distinguish genetic variance from phenotypic variance. `gpop` can support population summaries as its scientific interfaces become available; `gsim` provides simulated biological data where truth is known; `gsel` concerns selection objectives and decisions. None is required for this first descriptive practical, and model fitting remains with estimation tools.
+
+## Reproducibility and sources
+
+Data: [bgcourse mouse.rds at the pinned revision](https://github.com/psoerensen/bgcourse/blob/224a4024f558ff9c0a481468979178e33b81b27b/data/mouse.rds). Teaching sequence: [2022 mouse practicals](https://psoerensen.github.io/qgtutorials/Practicals_mouse_example.pdf), with related 2023 source in `qgapps`. Presentation reference: [Bayesian Linear Regression materials](https://psoerensen.github.io/bayesian-linear-regression/).
+
+```{r}
+#| label: session-information
+sessionInfo()
+```

@@ -3,6 +3,7 @@ project:
   output-dir: docs
   render:
     - index.qmd
+    - tutorials/mouse_quantitative_traits.qmd
     - slides/introduction_quantitative_genetics.qmd
     - slides/introduction_quantitative_genetics_narrated.qmd
   resources:
@@ -19,6 +20,8 @@ website:
         href: slides/introduction_quantitative_genetics.html
       - text: "Narrated slides"
         href: slides/introduction_quantitative_genetics_narrated.html
+      - text: "Tutorial"
+        href: tutorials/mouse_quantitative_traits.html
       - text: "qgteach"
         href: https://psoerensen.github.io/qgteach/
 
