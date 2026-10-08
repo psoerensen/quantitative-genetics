@@ -30,7 +30,7 @@ Arrows show useful conceptual connections, not compulsory software dependencies.
 
 ## Population-genetics sequence
 
-These twelve practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.
+These thirteen practicals use base R and hypothetical inputs. They require no biological downloads or additional R packages.
 
 | Practical | Main question | Useful preparation |
 |---|---|---|
@@ -49,6 +49,8 @@ These twelve practicals use base R and hypothetical inputs. They require no biol
 | [PG 11: DNA profiles and match probabilities](https://psoerensen.github.io/population-genetics/tutorials/dna_match_probabilities.html) | Which assumptions connect genotype frequencies to match evidence? | PG 2–3 and PG 5; conditional probability |
 
 | [PG 12: Sequence divergence and the molecular clock](https://psoerensen.github.io/population-genetics/tutorials/molecular_clock.html) | How do substitution and calibration assumptions turn differences into time? | PG 1, PG 4–5; probability and logarithms |
+
+| [PG 13: Disease alleles, penetrance and population risk](https://psoerensen.github.io/population-genetics/tutorials/disease_alleles_penetrance.html) | How do genotype frequencies and penetrance determine phenotype probabilities? | PG 2–3; conditional probability |
 
 Keep [population-genetics slides](https://psoerensen.github.io/population-genetics/slides/introduction_population_genetics.html) alongside the practicals. In particular, HWE is a model expectation; identity by descent is defined on an ancestral base; and dosage alone does not identify phase.
 
@@ -86,6 +88,7 @@ The practicals cover the central flow, but some slide topics currently have expl
 | Conservation genetics and management choices | PG 10; parental contributions, kinship, marker expectations and constrained choices |
 | DNA forensics and probability interpretation | PG 11; multi-allelic genotype probabilities, population structure and source hypotheses |
 | Sequence divergence and molecular clocks | PG 12; comparable sites, JC distance, rate units and conditional uncertainty |
+| Population genetics in medicine | PG 13; penetrance, inbreeding, known-parent crosses and reverse conditioning |
 | Quantitative variation, covariance and single-locus gene action | QG 1–2; worked mouse analysis and hypothetical checks |
 | Genotype-by-environment interaction and broad-sense entry-mean heritability | QG 12; replicated genotypes, balanced ANOVA and observation-unit distinctions |
 | Narrow-sense heritability and fitted genetic evaluation | QG 3–5; an additive relationship model, BLUP and held-out phenotype prediction |
@@ -95,7 +98,7 @@ The practicals cover the central flow, but some slide topics currently have expl
 
 ### Further extensions
 
-PG 10 now provides a conservation-genetics application. PG 11 adds DNA-profile probabilities and evidence interpretation. PG 12 adds sequence divergence and a simple calibrated clock. The medicine application still lacks a dedicated practical. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.
+PG 10 now provides a conservation-genetics application. PG 11 adds DNA-profile probabilities and evidence interpretation. PG 12 adds sequence divergence and a simple calibrated clock. PG 13 adds the medicine theme using hypothetical genotype-specific penetrance and conditional probabilities. PG 9 now provides a worked mutation–selection and mutation–drift synthesis, distinguishing equilibrium frequencies from stationary distributions.
 
 The current synthetic programme examples use phenotype scores. Replacing them with an externally fitted evaluation would be a further extension, requiring an information schedule and validation target. QG 12 now covers genotype-by-environment interaction and broad-sense heritability; teach it after QG 2 and before QG 3 when following the slide flow.
 
@@ -122,6 +125,12 @@ Checkpoint: distinguish predicted breeding values, phenotype predictions, model-
 Work through **PG 1 → PG 2 → PG 3 → PG 4 → PG 5 → PG 6 → PG 7 → PG 9**. Use **QG 2** as a bridge between gene action for a trait and genotype fitness.
 
 Checkpoint: separate deterministic expectations from finite-population realizations. Fitness dominance in PG 7 is a different model quantity from phenotypic dominance in QG 2; economic weights in QG 6 describe another decision layer.
+
+### Disease alleles and phenotype probability
+
+Review **PG 2–3 → PG 13**. Declare the phenotype observation window and penetrance vector before translating genotype frequencies into phenotype probabilities.
+
+Checkpoint: state when prevalence equals q squared, and distinguish population averages, known-parent crosses and reverse conditioning.
 
 ### Sequence divergence and dating
 
@@ -151,7 +160,7 @@ Checkpoint: define the objective, candidate eligibility, information schedule, p
 
 | Materials | Requirements and inputs |
 |---|---|
-| PG 1–12 | Base R; hypothetical data; no required downloads |
+| PG 1–13 | Base R; hypothetical data; no required downloads |
 | QG 1–2 | Base R calculations; pinned public mouse data downloads |
 | QG 3–5 | `qgg`; pinned public mouse data; the shared helper script |
 | QG 6 | Base R; supplied hypothetical objective and covariance inputs |
